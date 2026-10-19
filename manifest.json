@@ -1,0 +1,26 @@
+{
+  "name": "現場点検ノート",
+  "short_name": "点検ノート",
+  "description": "図面・設備・測定・写真を端末内に保存する現場点検アプリ試作",
+  "lang": "ja",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#eef2f6",
+  "theme_color": "#14283d",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#14283d">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>現場点検ノート 試作</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">点</span><div><strong>現場点検ノート</strong><small>オフライン試作 0.18</small></div></div>
+    <div class="top-actions"><span id="networkBadge" class="badge">接続確認中</span><span id="offlineBadge" class="badge offline-pending" title="アプリ本体のオフライン保存状態">オフライン確認中</span><button id="newProjectBtn" class="btn btn-outline">新規案件</button><button id="saveProjectBtn" class="btn btn-light">案件を書き出す</button><button id="openProjectBtn" class="btn btn-outline">案件を開く</button><input id="projectFile" type="file" accept=".zip,application/zip" hidden></div>
+  </header>
+  <main class="app-shell" id="appShell">
+    <section class="workspace">
+      <div class="project-strip">
+        <div class="project-fields"><label>物件名<input id="projectName" type="text" placeholder="物件名を入力"></label><div class="date-range"><label>点検開始<input id="inspectionDateStart" type="date"></label><label>点検終了<input id="inspectionDateEnd" type="date"></label></div></div>
+        <div class="project-buttons"><button id="pdfBtn" class="btn btn-primary">図面PDFを読み込む</button><input id="pdfFile" type="file" accept="application/pdf,.pdf" hidden><button id="csvBtn" class="btn btn-light">測定一覧CSV</button><button id="reportBtn" class="btn btn-primary">速報版報告書</button></div>
+      </div>
+      <div class="viewer-toolbar">
+        <div class="page-controls"><button id="prevPage" class="icon-btn" aria-label="前のページ">‹</button><button id="pageLabel" class="page-label" title="クリックしてページ名を設定">図面未選択</button><button id="nextPage" class="icon-btn" aria-label="次のページ">›</button></div>
+        <div class="tool-hint"><span class="mode-dot"></span><span id="modeHint">アイコンを選んでから図面をタップ</span><label class="continuous-place"><input id="continuousPlace" type="checkbox">連続配置</label><button id="cancelPlaceBtn" class="btn btn-light cancel-place" hidden>配置解除</button></div>
+        <div class="zoom-controls"><button id="zoomOut" class="icon-btn" aria-label="縮小">−</button><span id="zoomLabel">100%</span><button id="zoomIn" class="icon-btn" aria-label="拡大">＋</button><button id="fitBtn" class="icon-btn" title="ページ全体">全体</button></div>
+      </div>
+      <div class="drawing-area" id="drawingArea">
+        <div class="empty-state" id="emptyState"><div class="empty-icon">▧</div><h2>図面PDFを読み込んでください</h2><p>読み込んだ図面はこのiPad内に保存できます。<br>現場では通信なしで記録できる設計です。</p><button id="emptyPdfBtn" class="btn btn-primary">PDFを選択</button></div>
+        <div class="page-wrap" id="pageWrap" hidden>
+          <canvas id="pdfCanvas"></canvas>
+          <div id="markerLayer" class="marker-layer"></div>
+        </div>
+      </div>
+      <div class="map-footer"><span id="markerCount">設備 0件</span><span id="pdfName">図面未選択</span><button id="exportPdfBtn" class="text-btn" disabled title="PDF書き出しは後続機能">注記付きPDF（後続機能）</button></div>
+    </section>
+    <aside class="side-panel" id="sidePanel">
+      <div class="panel-tabs"><button class="tab active" data-tab="placement">配置</button><button class="tab" data-tab="equipment">設備一覧</button><button class="tab" data-tab="pages">ページ</button><button class="tab" data-tab="master">アイコン設定</button><button class="tab" data-tab="basic">基本設定</button><button id="panelCloseBtn" class="panel-close" title="パネルを閉じる" aria-label="パネルを閉じる">×</button></div>
+      <section id="placementTab" class="panel-content">
+        <div class="panel-heading"><div><h2>設備を配置</h2><p>種類を選び、図面上の位置をタップ</p></div><button id="addCustomType" class="round-plus" title="アイコン種別を追加">＋</button></div>
+        <div id="iconPalette" class="icon-palette"></div>
+        <div class="offline-note"><span>●</span><div><strong>この端末内で作業</strong><small>案件の書き出しで別のiPadへ移せます</small></div></div>
+      </section>
+      <section id="equipmentTab" class="panel-content" hidden>
+        <div class="panel-heading"><div><h2>配置済み設備</h2><p>選ぶと該当ページ・位置へ移動</p></div><span id="equipmentCount" class="count-pill">0</span></div>
+        <div id="equipmentList" class="equipment-list"><div class="list-empty">まだ設備がありません</div></div>
+      </section>
+      <section id="pagesTab" class="panel-content" hidden>
+        <div class="panel-heading"><div><h2>ページ一覧</h2><p>ページを選ぶと図面へ移動</p></div></div>
+        <div id="pageList" class="page-list"><div class="list-empty">図面PDFを読み込むとページが表示されます</div></div>
+      </section>
+      <section id="masterTab" class="panel-content" hidden>
+        <div class="panel-heading"><div><h2>アイコン設定</h2><p>アイコンの用途と入力項目を設定</p></div></div>
+        <p class="master-intro">初期設定では標準の設備種別を用意しています。追加した種別は、この案件にも保存されます。</p>
+        <div id="masterList" class="master-list"></div>
+        <button id="newIconDefinition" class="btn btn-outline full">＋ 種別を追加</button>
+      </section>
+      <section id="basicTab" class="panel-content" hidden><div id="basicSettings"></div></section>
+    </aside>
+    <button id="panelReopenBtn" class="panel-reopen" hidden>メニューを表示</button>
+  </main>
+  <div id="modalRoot"></div>
+  <div id="toast" class="toast" role="status"></div>
+  <script src="vendor/jszip.min.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
