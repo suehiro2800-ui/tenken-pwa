@@ -83,3 +83,23 @@ body.drawing-fullscreen .map-footer{height:39px}
 .environment-actions .btn{flex:1 1 135px;white-space:normal;line-height:1.35}
 
 .field.check-field{flex-direction:row;align-items:center;justify-content:space-between}.field.check-field input{width:auto}
+
+.settings-modal{width:min(980px,100%)}
+.settings-modal .modal-body{max-height:72vh;overflow:auto}
+.settings-intro{font-size:12px;color:var(--muted);margin-bottom:12px}
+.settings-group{border:1px solid var(--line);border-radius:10px;margin:9px 0;background:#fff}
+.settings-group>summary{cursor:pointer;list-style:none;padding:12px 14px;font-size:13px;font-weight:750;color:#294761;display:flex;justify-content:space-between}
+.settings-group>summary::-webkit-details-marker{display:none}
+.settings-group>summary::after{content:'＋';color:var(--muted)}
+.settings-group[open]>summary::after{content:'−'}
+.settings-group[open]>summary{border-bottom:1px solid var(--line)}
+.settings-group>.master-intro,.settings-group>.basic-master-list,.settings-group>.btn,.settings-group>details{margin-left:12px;margin-right:12px}
+.settings-group>.master-intro{margin-top:10px}
+.settings-group>.btn:last-child{margin-bottom:12px}
+.wording-edit-row{display:grid;grid-template-columns:125px minmax(0,1fr) 58px;gap:8px;align-items:start;margin:8px 0}
+.wording-edit-row textarea{width:100%;min-height:52px;resize:vertical;border:1px solid #dbe3eb;border-radius:8px;padding:8px;font:inherit;font-size:12px}
+.wording-edit-row select{height:38px;border:1px solid #dbe3eb;border-radius:8px;background:white;padding:5px}
+.wording-edit-row button{height:36px;border:1px solid #e6bbbb;border-radius:8px;background:#fff;color:#a34a4a}
+.settings-group details.settings-group{margin:8px 12px;background:#f8fafc}
+.settings-group details.settings-group summary{font-size:12px;padding:10px}
+@media(max-width:640px){.wording-edit-row{grid-template-columns:1fr 56px}.wording-edit-row select{grid-column:1/-1}.settings-modal .modal-body{padding:12px}}
