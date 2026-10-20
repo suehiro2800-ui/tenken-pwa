@@ -79,3 +79,7 @@ body.drawing-fullscreen .map-footer{height:39px}
   .page-wrap canvas{display:block!important;max-width:none!important}
   .marker-layer{overflow:visible!important}
 }
+.environment-actions{display:flex;flex-wrap:wrap;gap:7px}
+.environment-actions .btn{flex:1 1 135px;white-space:normal;line-height:1.35}
+
+.field.check-field{flex-direction:row;align-items:center;justify-content:space-between}.field.check-field input{width:auto}

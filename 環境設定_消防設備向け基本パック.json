@@ -1,0 +1,457 @@
+{
+  "format": "tenken-pwa-settings",
+  "schemaVersion": 1,
+  "name": "消防・防火設備 点検基本パック（編集用）",
+  "description": "現場点検ノート用のたたき台です。設備名、整理記号、分類、文例等は運用に合わせて編集してください。",
+  "workCategoryMaster": [
+    {
+      "id": "specific-building",
+      "name": "特定建築物調査"
+    },
+    {
+      "id": "fire-safety",
+      "name": "防火設備検査"
+    },
+    {
+      "id": "building-equipment",
+      "name": "建築設備検査"
+    },
+    {
+      "id": "fire-inspection",
+      "name": "消防設備点検"
+    },
+    {
+      "id": "fire-repair",
+      "name": "消防設備修繕"
+    },
+    {
+      "id": "survey-work",
+      "name": "調査作業"
+    },
+    {
+      "id": "other-work",
+      "name": "その他"
+    }
+  ],
+  "equipmentGroupMaster": [
+    {
+      "id": "fire-door",
+      "name": "防火扉"
+    },
+    {
+      "id": "fire-shutter",
+      "name": "防火シャッター等"
+    },
+    {
+      "id": "smoke-control",
+      "name": "排煙設備"
+    },
+    {
+      "id": "emergency-light",
+      "name": "非常灯"
+    },
+    {
+      "id": "other-equipment",
+      "name": "その他"
+    },
+    {
+      "id": "fire-extinguisher",
+      "name": "消火器"
+    },
+    {
+      "id": "indoor-hydrant",
+      "name": "屋内消火栓設備"
+    },
+    {
+      "id": "fire-alarm",
+      "name": "自動火災報知設備"
+    },
+    {
+      "id": "evacuation-equipment",
+      "name": "避難器具"
+    }
+  ],
+  "types": [
+    {
+      "id": "smoke-door",
+      "name": "常閉防火扉（SD）",
+      "category": "door",
+      "majorGroupId": "fire-door",
+      "workCategoryIds": [
+        "specific-building",
+        "fire-safety",
+        "fire-repair"
+      ],
+      "glyph": "SD",
+      "form": "door",
+      "mark": "SD",
+      "color": "#1769aa",
+      "defaultSize": 22,
+      "components": [
+        "扉"
+      ],
+      "countByDefault": true
+    },
+    {
+      "id": "fire-single",
+      "name": "防火扉・片扉",
+      "category": "door",
+      "majorGroupId": "fire-door",
+      "workCategoryIds": [
+        "specific-building",
+        "fire-safety",
+        "fire-repair"
+      ],
+      "glyph": "扉",
+      "form": "door",
+      "mark": "FD",
+      "color": "#1769aa",
+      "defaultSize": 22,
+      "components": [
+        "扉"
+      ],
+      "countByDefault": true
+    },
+    {
+      "id": "fire-double",
+      "name": "防火扉・両扉",
+      "category": "door",
+      "majorGroupId": "fire-door",
+      "workCategoryIds": [
+        "specific-building",
+        "fire-safety",
+        "fire-repair"
+      ],
+      "glyph": "両",
+      "form": "door",
+      "mark": "FD",
+      "color": "#1769aa",
+      "defaultSize": 22,
+      "components": [
+        "向かって左",
+        "向かって右"
+      ],
+      "countByDefault": true
+    },
+    {
+      "id": "fire-parent-child",
+      "name": "防火扉・親子扉",
+      "category": "door",
+      "majorGroupId": "fire-door",
+      "workCategoryIds": [
+        "specific-building",
+        "fire-safety",
+        "fire-repair"
+      ],
+      "glyph": "親",
+      "form": "door",
+      "mark": "FD",
+      "color": "#1769aa",
+      "defaultSize": 22,
+      "components": [
+        "大きい扉",
+        "小さい扉"
+      ],
+      "countByDefault": true
+    },
+    {
+      "id": "wicket",
+      "name": "くぐり戸",
+      "category": "door",
+      "majorGroupId": "fire-door",
+      "workCategoryIds": [
+        "specific-building",
+        "fire-safety",
+        "fire-repair"
+      ],
+      "glyph": "小",
+      "form": "door",
+      "mark": "KD",
+      "color": "#1769aa",
+      "defaultSize": 22,
+      "components": [
+        "くぐり戸"
+      ],
+      "countByDefault": true
+    },
+    {
+      "id": "shutter",
+      "name": "防火シャッター",
+      "category": "door",
+      "majorGroupId": "fire-shutter",
+      "workCategoryIds": [
+        "specific-building",
+        "fire-safety",
+        "fire-repair"
+      ],
+      "glyph": "SS",
+      "form": "door",
+      "mark": "SS",
+      "color": "#1769aa",
+      "defaultSize": 22,
+      "components": [
+        "シャッター"
+      ],
+      "countByDefault": true
+    },
+    {
+      "id": "screen",
+      "name": "耐火クロススクリーン",
+      "category": "door",
+      "majorGroupId": "fire-shutter",
+      "workCategoryIds": [
+        "specific-building",
+        "fire-safety",
+        "fire-repair"
+      ],
+      "glyph": "CS",
+      "form": "door",
+      "mark": "CS",
+      "color": "#1769aa",
+      "defaultSize": 22,
+      "components": [
+        "スクリーン"
+      ],
+      "countByDefault": true
+    },
+    {
+      "id": "smoke-outlet",
+      "name": "排煙口",
+      "category": "smoke",
+      "majorGroupId": "smoke-control",
+      "workCategoryIds": [
+        "specific-building",
+        "building-equipment"
+      ],
+      "glyph": "風",
+      "form": "smokeOutlet",
+      "mark": "SH",
+      "color": "#19a18e",
+      "defaultSize": 24,
+      "components": [],
+      "countByDefault": true
+    },
+    {
+      "id": "smoke-window",
+      "name": "排煙窓",
+      "category": "smoke",
+      "majorGroupId": "smoke-control",
+      "workCategoryIds": [
+        "specific-building",
+        "building-equipment"
+      ],
+      "glyph": "窓",
+      "form": "smokeWindow",
+      "mark": "SW",
+      "color": "#19a18e",
+      "defaultSize": 24,
+      "components": [],
+      "labelPosition": "bottom",
+      "countByDefault": true
+    },
+    {
+      "id": "light",
+      "name": "非常灯",
+      "category": "light",
+      "majorGroupId": "emergency-light",
+      "workCategoryIds": [
+        "fire-inspection",
+        "fire-repair"
+      ],
+      "glyph": "灯",
+      "form": "basic",
+      "mark": "EL",
+      "color": "#d99d2b",
+      "defaultSize": 22,
+      "components": [],
+      "countByDefault": true
+    },
+    {
+      "id": "special",
+      "name": "特記事項",
+      "category": "other",
+      "majorGroupId": "other-equipment",
+      "workCategoryIds": [],
+      "glyph": "特",
+      "form": "basic",
+      "mark": "SP",
+      "color": "#705ab0",
+      "defaultSize": 22,
+      "components": [],
+      "countByDefault": false
+    },
+    {
+      "id": "reference-photo",
+      "name": "参考写真",
+      "category": "other",
+      "majorGroupId": "other-equipment",
+      "workCategoryIds": [],
+      "glyph": "写",
+      "form": "basic",
+      "mark": "PH",
+      "color": "#0f8192",
+      "defaultSize": 22,
+      "components": [],
+      "countByDefault": false
+    },
+    {
+      "id": "free-memo",
+      "name": "フリーメモ",
+      "category": "other",
+      "majorGroupId": "other-equipment",
+      "workCategoryIds": [],
+      "glyph": "メ",
+      "form": "basic",
+      "mark": "MEMO",
+      "color": "#7b6a53",
+      "defaultSize": 22,
+      "components": [],
+      "countByDefault": false
+    },
+    {
+      "id": "fire-extinguisher",
+      "name": "消火器",
+      "category": "other",
+      "majorGroupId": "fire-extinguisher",
+      "workCategoryIds": [
+        "fire-inspection",
+        "fire-repair"
+      ],
+      "glyph": "消",
+      "form": "basic",
+      "mark": "EX",
+      "color": "#705ab0",
+      "textColor": "#ffffff",
+      "defaultSize": 22,
+      "countUnit": "本",
+      "countByDefault": true,
+      "components": [],
+      "extraFields": [],
+      "enabled": true,
+      "labelPosition": "bottom"
+    },
+    {
+      "id": "indoor-hydrant",
+      "name": "屋内消火栓",
+      "category": "other",
+      "majorGroupId": "indoor-hydrant",
+      "workCategoryIds": [
+        "fire-inspection",
+        "fire-repair"
+      ],
+      "glyph": "栓",
+      "form": "basic",
+      "mark": "HYD",
+      "color": "#705ab0",
+      "textColor": "#ffffff",
+      "defaultSize": 22,
+      "countUnit": "台",
+      "countByDefault": true,
+      "components": [],
+      "extraFields": [],
+      "enabled": true,
+      "labelPosition": "bottom"
+    },
+    {
+      "id": "fire-alarm-detector",
+      "name": "火災感知器",
+      "category": "other",
+      "majorGroupId": "fire-alarm",
+      "workCategoryIds": [
+        "fire-inspection",
+        "fire-repair"
+      ],
+      "glyph": "感",
+      "form": "basic",
+      "mark": "DET",
+      "color": "#705ab0",
+      "textColor": "#ffffff",
+      "defaultSize": 22,
+      "countUnit": "個",
+      "countByDefault": true,
+      "components": [],
+      "extraFields": [],
+      "enabled": true,
+      "labelPosition": "bottom"
+    },
+    {
+      "id": "fire-alarm-callpoint",
+      "name": "発信機",
+      "category": "other",
+      "majorGroupId": "fire-alarm",
+      "workCategoryIds": [
+        "fire-inspection",
+        "fire-repair"
+      ],
+      "glyph": "発",
+      "form": "basic",
+      "mark": "BP",
+      "color": "#705ab0",
+      "textColor": "#ffffff",
+      "defaultSize": 22,
+      "countUnit": "台",
+      "countByDefault": true,
+      "components": [],
+      "extraFields": [],
+      "enabled": true,
+      "labelPosition": "bottom"
+    },
+    {
+      "id": "exit-light",
+      "name": "誘導灯",
+      "category": "other",
+      "majorGroupId": "emergency-light",
+      "workCategoryIds": [
+        "fire-inspection",
+        "fire-repair"
+      ],
+      "glyph": "誘",
+      "form": "basic",
+      "mark": "EXIT",
+      "color": "#705ab0",
+      "textColor": "#ffffff",
+      "defaultSize": 22,
+      "countUnit": "台",
+      "countByDefault": true,
+      "components": [],
+      "extraFields": [],
+      "enabled": true,
+      "labelPosition": "bottom"
+    },
+    {
+      "id": "evacuation-device",
+      "name": "避難器具",
+      "category": "other",
+      "majorGroupId": "evacuation-equipment",
+      "workCategoryIds": [
+        "fire-inspection",
+        "fire-repair"
+      ],
+      "glyph": "避",
+      "form": "basic",
+      "mark": "EV",
+      "color": "#705ab0",
+      "textColor": "#ffffff",
+      "defaultSize": 22,
+      "countUnit": "台",
+      "countByDefault": true,
+      "components": [],
+      "extraFields": [],
+      "enabled": true,
+      "labelPosition": "bottom"
+    }
+  ],
+  "findingCategories": [
+    "要是正",
+    "既存不適格",
+    "特記事項",
+    "参考",
+    "注意点",
+    "参考写真",
+    "メモ"
+  ],
+  "wordingSets": [],
+  "reportDefaults": {
+    "workContent": ""
+  }
+}
