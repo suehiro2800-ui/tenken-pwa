@@ -14,7 +14,7 @@
 </head>
 <body>
   <header class="topbar">
-    <div class="brand"><span class="brand-mark">点</span><div><strong>現場点検ノート</strong><small>オフライン試作 0.21</small></div></div>
+    <div class="brand"><span class="brand-mark">点</span><div><strong>現場点検ノート</strong><small>オフライン試作 0.22</small></div></div>
     <div class="top-actions"><span id="networkBadge" class="badge">接続確認中</span><span id="offlineBadge" class="badge offline-pending" title="アプリ本体のオフライン保存状態">オフライン確認中</span><button id="newProjectBtn" class="btn btn-outline">新規案件</button><button id="deleteProjectBtn" class="btn btn-delete-project">案件削除</button><button id="saveProjectBtn" class="btn btn-light">案件を書き出す</button><button id="openProjectBtn" class="btn btn-outline">案件を開く</button><input id="projectFile" type="file" accept=".zip,application/zip" hidden></div>
   </header>
   <main class="app-shell" id="appShell">
@@ -38,18 +38,18 @@
       <div class="map-footer"><span id="markerCount">設備 0件</span><span id="pdfName">図面未選択</span><button id="exportPdfBtn" class="text-btn" disabled title="PDF書き出しは後続機能">注記付きPDF（後続機能）</button></div>
     </section>
     <aside class="side-panel" id="sidePanel">
-      <div class="panel-tabs"><button class="tab active" data-tab="placement">配置</button><button class="tab" data-tab="equipment">設備一覧</button><button class="tab" data-tab="pages">ページ</button><button class="tab" data-tab="master">アイコン設定</button><button class="tab" data-tab="basic">基本設定</button><button id="panelCloseBtn" class="panel-close" title="パネルを閉じる" aria-label="パネルを閉じる">×</button></div>
+      <div class="panel-tabs"><button class="tab active" data-tab="placement">配置</button><button class="tab" data-tab="equipment">検査一覧</button><button class="tab" data-tab="pages">ページ</button><button class="tab" data-tab="master">アイコン設定</button><button class="tab" data-tab="basic">基本設定</button><button id="panelCloseBtn" class="panel-close" title="パネルを閉じる" aria-label="パネルを閉じる">×</button></div>
       <section id="placementTab" class="panel-content">
         <div class="panel-heading"><div><h2>設備を配置</h2><p>種類を選び、図面上の位置をタップ</p></div><button id="addCustomType" class="round-plus" title="アイコン種別を追加">＋</button></div>
         <div id="iconPalette" class="icon-palette"></div>
         <div class="offline-note"><span>●</span><div><strong>この端末内で作業</strong><small>案件の書き出しで別のiPadへ移せます</small></div></div>
       </section>
       <section id="equipmentTab" class="panel-content" hidden>
-        <div class="panel-heading"><div><h2>配置済み設備</h2><p>選ぶと該当ページ・位置へ移動</p></div><span id="equipmentCount" class="count-pill">0</span></div>
+        <div class="panel-heading"><div><h2>検査結果一覧</h2><p>整理番号順。選ぶと該当箇所へ移動</p></div><span id="equipmentCount" class="count-pill">0</span></div>
         <div id="equipmentList" class="equipment-list"><div class="list-empty">まだ設備がありません</div></div>
       </section>
       <section id="pagesTab" class="panel-content" hidden>
-        <div class="panel-heading"><div><h2>ページ一覧</h2><p>ページを選ぶと図面へ移動</p></div></div>
+        <div class="panel-heading"><div><h2>ページ・設備数量</h2><p>ページ名と設備名別の数量</p></div><button id="pageCountCsvBtn" class="btn btn-light" type="button" disabled>数量CSV</button></div>
         <div id="pageList" class="page-list"><div class="list-empty">図面PDFを読み込むとページが表示されます</div></div>
       </section>
       <section id="masterTab" class="panel-content" hidden>
