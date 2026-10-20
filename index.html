@@ -14,14 +14,14 @@
 </head>
 <body>
   <header class="topbar">
-    <div class="brand"><span class="brand-mark">点</span><div><strong>現場点検ノート</strong><small>オフライン試作 0.23</small></div></div>
+    <div class="brand"><span class="brand-mark">点</span><div><strong>現場点検ノート</strong><small>オフライン試作 0.24</small></div></div>
     <div class="top-actions"><span id="networkBadge" class="badge">接続確認中</span><span id="offlineBadge" class="badge offline-pending" title="アプリ本体のオフライン保存状態">オフライン確認中</span><button id="newProjectBtn" class="btn btn-outline">新規案件</button><button id="deleteProjectBtn" class="btn btn-delete-project">案件削除</button><button id="saveProjectBtn" class="btn btn-light">案件を書き出す</button><button id="openProjectBtn" class="btn btn-outline">案件を開く</button><input id="projectFile" type="file" accept=".zip,application/zip" hidden></div>
   </header>
   <main class="app-shell" id="appShell">
     <section class="workspace">
       <div class="project-strip">
         <div class="project-fields"><label>物件名<input id="projectName" type="text" placeholder="物件名を入力"></label><div class="date-range"><label>点検開始<input id="inspectionDateStart" type="date"></label><label>点検終了<input id="inspectionDateEnd" type="date"></label></div></div>
-        <div class="project-buttons"><button id="pdfBtn" class="btn btn-primary">図面PDFを読み込む</button><input id="pdfFile" type="file" accept="application/pdf,.pdf" hidden><button id="csvBtn" class="btn btn-light">測定一覧CSV</button><button id="exportPdfBtn" class="btn btn-light" disabled>提出用図面</button><button id="reportBtn" class="btn btn-primary">速報版報告書</button></div>
+        <div class="project-buttons"><button id="pdfBtn" class="btn btn-primary">図面PDFを読み込む</button><input id="pdfFile" type="file" accept="application/pdf,.pdf" hidden><button id="csvBtn" class="btn btn-light">測定一覧CSV</button><button id="exportPdfBtn" class="btn btn-light" disabled>指摘箇所確認図</button><button id="reportBtn" class="btn btn-primary">速報版報告書</button></div>
       </div>
       <div class="viewer-toolbar">
         <div class="page-controls"><button id="prevPage" class="icon-btn" aria-label="前のページ">‹</button><button id="pageLabel" class="page-label" title="クリックしてページ名を設定">図面未選択</button><button id="nextPage" class="icon-btn" aria-label="次のページ">›</button></div>
