@@ -114,3 +114,5 @@ body.drawing-fullscreen .map-footer{height:39px}
 .map-marker[data-label-position="left"] .camera-mark{left:auto;right:-9px;top:auto;bottom:-10px}
 .map-marker[data-label-position="right"] .focus-mark{left:-9px;right:auto;top:-10px;bottom:auto}
 .map-marker[data-label-position="right"] .camera-mark{left:-9px;right:auto;top:auto;bottom:-10px}
+
+.field-management-section{border:1px solid var(--line);border-radius:10px;padding:12px;margin:0 0 12px;background:#f8fafc}.field-management-section h3{margin:0 0 8px;font-size:13px}.field-management-note{margin:10px 0}.field-management-note textarea{min-height:90px;resize:vertical;line-height:1.5}
