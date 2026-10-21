@@ -2,7 +2,7 @@ import * as pdfjsLib from './vendor/pdf.min.mjs';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = './vendor/pdf.worker.min.mjs';
 const DB_NAME='tenken-pwa-local', DB_VERSION=1, STORE='projects';
-const APP_VERSION='0.35';
+const APP_VERSION='0.36';
 const ENV_SETTINGS_KEY='tenken-pwa-environment-settings-v1';
 const COUNT_EXCLUDED_DEFAULTS=new Set(['special','reference-photo','free-memo']);
 const DEFAULT_WORK_CATEGORIES=[
@@ -289,7 +289,7 @@ async function openSubmissionDrawing(){
 async function renderSubmissionDrawingPage(pageNo,records,win){
   win.document.write('<!doctype html><meta charset="utf-8"><title>図面を準備中</title><p style="font:16px sans-serif;padding:24px">このページを準備しています…</p>');
   try{
-    const p=state.project,page=await state.pdf.getPage(pageNo),viewport=page.getViewport({scale:1.25}),canvas=document.createElement('canvas');canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
+    const p=state.project,page=await state.pdf.getPage(pageNo),baseViewport=page.getViewport({scale:1}),renderScale=Math.min(2,Math.sqrt(6000000/(baseViewport.width*baseViewport.height))),viewport=page.getViewport({scale:renderScale}),canvas=document.createElement('canvas');canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
     const reports=records.filter(r=>Number(r.m.page)===pageNo),reportedIds=new Set(reports.map(r=>r.m.id)),onlyReported=p.submissionOptions?.onlyReported!==false,visible=p.markers.filter(m=>Number(m.page)===pageNo&&m.submission?.showMarker!==false&&(!onlyReported||reportedIds.has(m.id)));
     let overlay='';
     for(const m of visible){const t=getType(m.typeId),x=m.x*viewport.width,y=m.y*viewport.height,size=Math.max(24,Math.min(52,Number(m.size)||28)),fill=t.color||'#1769aa',markerReports=reports.filter(r=>r.m.id===m.id),hasPhoto=markerReports.some(r=>r.photos.length>0),glyph=t.iconData?`<image href="${escapeHtml(t.iconData)}" x="${x-size/2+3}" y="${y-size/2+3}" width="${size-6}" height="${size-6}" preserveAspectRatio="xMidYMid meet"/>`:`<text x="${x}" y="${y+5}" text-anchor="middle" font-size="${Math.min(19,size*.5)}" font-weight="800" fill="${escapeHtml(t.textColor||'#fff')}">${escapeHtml(t.glyph||t.name.slice(0,1))}</text>`;
@@ -298,7 +298,7 @@ async function renderSubmissionDrawingPage(pageNo,records,win){
       if(hasPhoto){const cx=x+size/2-1,cy=y-size/2+1;overlay+=`<g><circle cx="${cx}" cy="${cy}" r="12" fill="#fff" stroke="#18334d" stroke-width="2.5"/><rect x="${cx-7}" y="${cy-4}" width="14" height="10" rx="2" fill="#18334d"/><path d="M ${cx-4} ${cy-4} l2 -3 h5 l2 3" fill="#18334d"/><circle cx="${cx}" cy="${cy+1}" r="2.7" fill="#fff"/></g>`}
     }
     const svg=`<svg class="overlay" viewBox="0 0 ${viewport.width} ${viewport.height}" xmlns="http://www.w3.org/2000/svg">${overlay}</svg>`,rowGroups=new Map();for(const r of reports){const list=rowGroups.get(r.number)||[];list.push(r);rowGroups.set(r.number,list)}const rows=[...rowGroups.entries()].map(([number,items])=>{const targets=[...new Set(items.map(r=>markerTag(r.m,r.t)))].join('、');return `<div class="report-row"><b>${number}</b><span>${escapeHtml(items[0].text)}</span><span>${escapeHtml(targets)}</span></div>`}).join('');
-    const ratio=viewport.width/viewport.height,drawWidth=Math.min(279,151*ratio),drawHeight=drawWidth/ratio,image=canvas.toDataURL('image/jpeg',.84);canvas.width=0;canvas.height=0;page.cleanup?.();
+    const ratio=viewport.width/viewport.height,drawWidth=Math.min(279,151*ratio),drawHeight=drawWidth/ratio,image=canvas.toDataURL('image/jpeg',.9);canvas.width=0;canvas.height=0;page.cleanup?.();
     const html=`<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(p.name||'指摘箇所確認図')} ${escapeHtml(pageName(pageNo))}</title><style>${submissionDrawingCss()}</style></head><body><div class="toolbar"><span class="hint">${escapeHtml(pageName(pageNo))}の個別出力です。赤丸の番号で一覧と照合できます。</span><button onclick="window.print()">印刷 / PDF保存</button></div><section class="sheet"><h1>${escapeHtml(pageName(pageNo))} <small>${pageNo} / ${state.pdf.numPages}</small></h1><div class="drawing" style="width:${drawWidth}mm;height:${drawHeight}mm"><img src="${image}" alt="${escapeHtml(pageName(pageNo))}">${svg}</div><div class="reports">${rows}</div></section></body></html>`;
     win.document.open();win.document.write(html);win.document.close();
   }catch(err){console.error(err);win.document.body.innerHTML='<p style="font:16px sans-serif;padding:24px">図面を作成できませんでした。PDFとメモリの状態を確認してください。</p>';showToast('図面を作成できませんでした')}
