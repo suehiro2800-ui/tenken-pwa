@@ -103,3 +103,14 @@ body.drawing-fullscreen .map-footer{height:39px}
 .settings-group details.settings-group{margin:8px 12px;background:#f8fafc}
 .settings-group details.settings-group summary{font-size:12px;padding:10px}
 @media(max-width:640px){.wording-edit-row{grid-template-columns:1fr 56px}.wording-edit-row select{grid-column:1/-1}.settings-modal .modal-body{padding:12px}}
+
+/* In issue view, keep the finding/photo badges opposite the serial label. */
+.map-marker.focus-finding .ng-dot{display:none}
+.map-marker[data-label-position="bottom"] .focus-mark{left:-9px;right:auto;top:-10px}
+.map-marker[data-label-position="bottom"] .camera-mark{right:-9px;top:-10px;bottom:auto}
+.map-marker[data-label-position="top"] .focus-mark{left:-9px;right:auto;top:auto;bottom:-10px}
+.map-marker[data-label-position="top"] .camera-mark{right:-9px;top:auto;bottom:-10px}
+.map-marker[data-label-position="left"] .focus-mark{left:auto;right:-9px;top:-10px;bottom:auto}
+.map-marker[data-label-position="left"] .camera-mark{left:auto;right:-9px;top:auto;bottom:-10px}
+.map-marker[data-label-position="right"] .focus-mark{left:-9px;right:auto;top:-10px;bottom:auto}
+.map-marker[data-label-position="right"] .camera-mark{left:-9px;right:auto;top:auto;bottom:-10px}
