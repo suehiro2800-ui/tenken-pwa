@@ -14,7 +14,7 @@
 </head>
 <body>
   <header class="topbar">
-    <div class="brand"><span class="brand-mark">点</span><div><strong>現場点検ノート</strong><small>オフライン試作 0.30</small></div></div>
+    <div class="brand"><span class="brand-mark">点</span><div><strong>現場点検ノート</strong><small>オフライン試作 0.31</small></div></div>
     <div class="top-actions"><span id="networkBadge" class="badge">接続確認中</span><span id="offlineBadge" class="badge offline-pending" title="アプリ本体のオフライン保存状態">オフライン確認中</span><button id="newProjectBtn" class="btn btn-outline">新規案件</button><button id="deleteProjectBtn" class="btn btn-delete-project">案件削除</button><button id="saveProjectBtn" class="btn btn-light">案件を書き出す</button><button id="openProjectBtn" class="btn btn-outline">案件を開く</button><input id="projectFile" type="file" accept=".zip,application/zip" hidden></div>
   </header>
   <main class="app-shell" id="appShell">
@@ -38,9 +38,9 @@
       <div class="map-footer"><span id="markerCount">設備 0件</span><span id="pdfName">図面未選択</span><span id="viewModeLabel" class="view-mode-label" hidden>指摘表示</span></div>
     </section>
     <aside class="side-panel" id="sidePanel">
-      <div class="panel-tabs"><button class="tab active" data-tab="placement">配置</button><button class="tab" data-tab="equipment">検査一覧</button><button class="tab" data-tab="pages">ページ</button><button class="tab" data-tab="master">アイコン設定</button><button class="tab" data-tab="basic">基本設定</button><button id="panelCloseBtn" class="panel-close" title="パネルを閉じる" aria-label="パネルを閉じる">×</button></div>
+      <div class="panel-tabs"><button class="tab active" data-tab="placement">設備配置</button><button class="tab" data-tab="equipment">検査一覧</button><button class="tab" data-tab="pages">ページ</button><button class="tab" data-tab="basic">基本設定</button><button id="panelCloseBtn" class="panel-close" title="パネルを閉じる" aria-label="パネルを閉じる">×</button></div>
       <section id="placementTab" class="panel-content">
-        <div class="panel-heading"><div><h2>設備を配置</h2><p>種類を選び、図面上の位置をタップ</p></div><button id="addCustomType" class="round-plus" title="アイコン種別を追加">＋</button></div>
+        <div class="panel-heading"><div><h2>設備を配置</h2><p>種類を選び、図面上の位置をタップ</p></div></div>
         <div id="iconPalette" class="icon-palette"></div>
         <div class="offline-note"><span>●</span><div><strong>この端末内で作業</strong><small>案件の書き出しで別のiPadへ移せます</small></div></div>
       </section>
@@ -51,12 +51,6 @@
       <section id="pagesTab" class="panel-content" hidden>
         <div class="panel-heading"><div><h2>ページ・設備数量</h2><p>ページ名と設備名別の数量</p></div><button id="pageCountCsvBtn" class="btn btn-light" type="button" disabled>数量CSV</button></div>
         <div id="pageList" class="page-list"><div class="list-empty">図面PDFを読み込むとページが表示されます</div></div>
-      </section>
-      <section id="masterTab" class="panel-content" hidden>
-        <div class="panel-heading"><div><h2>アイコン設定</h2><p>アイコンの用途と入力項目を設定</p></div></div>
-        <p class="master-intro">初期設定では標準の設備種別を用意しています。追加した種別は、この案件にも保存されます。</p>
-        <div id="masterList" class="master-list"></div>
-        <button id="newIconDefinition" class="btn btn-outline full">＋ 種別を追加</button>
       </section>
       <section id="basicTab" class="panel-content" hidden><div id="basicSettings"></div></section>
     </aside>
