@@ -123,3 +123,17 @@ body.drawing-fullscreen .map-footer{height:39px}
 .field-map-marker.done{background:#e5f5ed;opacity:.78}.field-marker-icon{font-size:22px;line-height:1}.field-marker-done{position:absolute;right:-5px;top:-7px;width:16px;height:16px;border:1px solid #fff;border-radius:50%;background:#15945b;color:#fff;font-size:11px;font-weight:800;line-height:14px}.field-marker-label{position:absolute;left:calc(100% + 4px);top:50%;transform:translateY(-50%);max-width:170px;padding:3px 6px;border-radius:5px;background:#fff;color:#293b4d;font-size:10px;line-height:1.25;box-shadow:0 1px 4px #17253640;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
 .map-marker.context-marker{opacity:.58;pointer-events:none}.field-row-done{opacity:.72}.field-list-icon{width:36px;height:36px;display:grid;place-items:center;font-size:23px}.field-done-control{display:flex;align-items:center;gap:3px;padding:5px;font-size:10px;color:#52677b;cursor:pointer}.field-note-editor{display:grid;gap:12px}.field-note-kind{display:flex;align-items:center;gap:10px;font-size:26px}.field-note-kind strong{font-size:14px}
 [hidden]{display:none!important}.icon-btn.active{border-color:#2867bd;background:#eaf2ff;color:#1e5a9d}
+
+/* v0.49: checkbox layout and labels centred on the equipment position */
+.field input[type="checkbox"],.work-check-list input[type="checkbox"]{width:16px;height:16px;min-width:16px;flex:0 0 16px;padding:0;margin:0;appearance:auto}
+.work-check-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+.work-check-list label{min-width:0;justify-content:flex-start;overflow-wrap:anywhere}
+label.check-field{display:flex;align-items:flex-start;gap:8px;font-size:12px;line-height:1.6}
+label.check-field input[type="checkbox"]{margin-top:2px}
+.map-marker .marker-id{position:absolute;font-size:var(--marker-label-size,12px);line-height:1.15;margin:0;padding:1px 3px}
+.map-marker[data-label-position="left"],.map-marker[data-label-position="right"]{width:var(--marker-size,22px)!important;min-height:28px!important}
+.map-marker[data-label-position="bottom"] .marker-id{left:50%;top:calc(100% + 3px);transform:translateX(-50%)}
+.map-marker[data-label-position="top"] .marker-id{left:50%;bottom:calc(100% + 3px);transform:translateX(-50%)}
+.map-marker[data-label-position="left"] .marker-id{right:calc(100% + 3px);top:50%;transform:translateY(-50%)}
+.map-marker[data-label-position="right"] .marker-id{left:calc(100% + 3px);top:50%;transform:translateY(-50%)}
+@media(max-width:600px){.work-check-list{grid-template-columns:minmax(0,1fr)}}
