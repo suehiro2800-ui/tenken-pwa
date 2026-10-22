@@ -137,3 +137,5 @@ label.check-field input[type="checkbox"]{margin-top:2px}
 .map-marker[data-label-position="left"] .marker-id{right:calc(100% + 3px);top:50%;transform:translateY(-50%)}
 .map-marker[data-label-position="right"] .marker-id{left:calc(100% + 3px);top:50%;transform:translateY(-50%)}
 @media(max-width:600px){.work-check-list{grid-template-columns:minmax(0,1fr)}}
+
+.finding-proposal>span{font-weight:700;color:#38506b}.finding-proposal>small{font-size:10px;line-height:1.5;color:var(--muted)}
