@@ -153,3 +153,9 @@ label.check-field input[type="checkbox"]{margin-top:2px}
 .project-strip{height:auto;min-height:76px;flex-wrap:wrap;flex-shrink:0}
 .project-fields,.project-buttons,.top-actions{min-width:0;max-width:100%;flex-wrap:wrap}
 @media(max-width:680px){.project-strip{gap:8px}.project-buttons{flex-direction:row}}
+
+/* v0.53: grouped/favourite palette and ordering controls */
+.palette-group-controls{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:5px;margin-bottom:5px}.palette-group{border:1px solid #cbd8e6;background:#fff;border-radius:7px;padding:7px 9px;font:inherit;font-size:10px;color:#4c627a;cursor:pointer;min-height:32px}.palette-group.active{background:#e5f0ff;border-color:#397ec9;color:#1f5899;font-weight:700}.palette-group-controls>small{flex-basis:100%;font-size:9px;color:#7a8c9f;line-height:1.5}.palette-empty{grid-column:1/-1}
+.palette-item{position:relative}.palette-favorite-mark{position:absolute;right:5px;top:3px;font-size:10px;color:#c49318}
+.palette-order-controls{display:flex;gap:3px;flex:0 0 auto}.palette-order-controls button{border:1px solid #d7e0ea;border-radius:5px;background:#fff;color:#486784;min-width:25px;min-height:28px;cursor:pointer}.palette-order-controls button:disabled{opacity:.3;cursor:default}
+@media(max-width:450px){.master-row{flex-wrap:wrap}.master-row .master-main{flex-basis:calc(100% - 45px)}.palette-order-controls{margin-left:37px}.palette-group{padding:6px 8px}}
