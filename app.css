@@ -176,3 +176,9 @@ label.check-field input[type="checkbox"]{margin-top:2px}
 @media(max-width:680px){.modal-footer{flex-wrap:wrap}.modal-footer>div{max-width:100%;flex-wrap:wrap}.modal-footer>div:last-child{margin-left:auto}}
 
 .severity-row input,.severity-row select{min-width:0;max-width:100%}
+
+.meeting-note-fields{margin:10px 0 18px}.finding-card .severity-row[hidden],.quick-findings[hidden],.finding-quick-actions[hidden]{display:none!important}
+
+.field-photo-section{margin-top:18px}.field-photo-section h3{font-size:12px;color:#435e77}.field-photo-section .photo-list{margin-bottom:10px}
+
+.field-briefing{grid-column:1/-1;min-width:0}.field-briefing header{display:flex;align-items:center;justify-content:space-between;margin:2px 0 10px;color:#36556e;font-size:12px}.field-briefing-card{display:block;width:100%;min-width:0;text-align:left;border:1px solid #d6e2eb;border-radius:10px;background:#f8fbfd;padding:11px 12px;margin:7px 0;font:inherit;color:#344f64;cursor:pointer}.field-briefing-card strong{display:block;font-size:11px;margin-bottom:5px;color:#365b76}.field-briefing-card span{display:block;white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;line-height:1.65}.field-briefing-card.today{background:#fff9ed;border-color:#ecd8aa}.field-briefing>p{font-size:10px;line-height:1.6;color:#7b8c9b;margin:9px 0 13px}.field-briefing>h3{font-size:12px;color:#36556e;margin:15px 0 8px}
