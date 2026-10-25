@@ -90,7 +90,8 @@
       "components": [
         "扉"
       ],
-      "countByDefault": true
+      "countByDefault": true,
+      "paletteGroupId": "door"
     },
     {
       "id": "fire-single",
@@ -110,7 +111,8 @@
       "components": [
         "扉"
       ],
-      "countByDefault": true
+      "countByDefault": true,
+      "paletteGroupId": "door"
     },
     {
       "id": "fire-double",
@@ -131,7 +133,8 @@
         "向かって左",
         "向かって右"
       ],
-      "countByDefault": true
+      "countByDefault": true,
+      "paletteGroupId": "door"
     },
     {
       "id": "fire-parent-child",
@@ -152,7 +155,8 @@
         "大きい扉",
         "小さい扉"
       ],
-      "countByDefault": true
+      "countByDefault": true,
+      "paletteGroupId": "door"
     },
     {
       "id": "wicket",
@@ -172,7 +176,8 @@
       "components": [
         "くぐり戸"
       ],
-      "countByDefault": true
+      "countByDefault": true,
+      "paletteGroupId": "door"
     },
     {
       "id": "shutter",
@@ -192,7 +197,8 @@
       "components": [
         "シャッター"
       ],
-      "countByDefault": true
+      "countByDefault": true,
+      "paletteGroupId": "door"
     },
     {
       "id": "screen",
@@ -212,7 +218,8 @@
       "components": [
         "スクリーン"
       ],
-      "countByDefault": true
+      "countByDefault": true,
+      "paletteGroupId": "door"
     },
     {
       "id": "smoke-outlet",
@@ -229,7 +236,8 @@
       "color": "#19a18e",
       "defaultSize": 24,
       "components": [],
-      "countByDefault": true
+      "countByDefault": true,
+      "paletteGroupId": "smoke"
     },
     {
       "id": "smoke-window",
@@ -247,7 +255,8 @@
       "defaultSize": 24,
       "components": [],
       "labelPosition": "bottom",
-      "countByDefault": true
+      "countByDefault": true,
+      "paletteGroupId": "smoke"
     },
     {
       "id": "light",
@@ -264,7 +273,8 @@
       "color": "#d99d2b",
       "defaultSize": 22,
       "components": [],
-      "countByDefault": true
+      "countByDefault": true,
+      "paletteGroupId": "light"
     },
     {
       "id": "special",
@@ -278,7 +288,8 @@
       "color": "#705ab0",
       "defaultSize": 22,
       "components": [],
-      "countByDefault": false
+      "countByDefault": false,
+      "paletteGroupId": "other"
     },
     {
       "id": "reference-photo",
@@ -292,7 +303,8 @@
       "color": "#0f8192",
       "defaultSize": 22,
       "components": [],
-      "countByDefault": false
+      "countByDefault": false,
+      "paletteGroupId": "other"
     },
     {
       "id": "free-memo",
@@ -306,7 +318,8 @@
       "color": "#7b6a53",
       "defaultSize": 22,
       "components": [],
-      "countByDefault": false
+      "countByDefault": false,
+      "paletteGroupId": "other"
     },
     {
       "id": "fire-extinguisher",
@@ -328,7 +341,8 @@
       "components": [],
       "extraFields": [],
       "enabled": true,
-      "labelPosition": "bottom"
+      "labelPosition": "bottom",
+      "paletteGroupId": "other"
     },
     {
       "id": "indoor-hydrant",
@@ -350,7 +364,8 @@
       "components": [],
       "extraFields": [],
       "enabled": true,
-      "labelPosition": "bottom"
+      "labelPosition": "bottom",
+      "paletteGroupId": "other"
     },
     {
       "id": "fire-alarm-detector",
@@ -372,7 +387,8 @@
       "components": [],
       "extraFields": [],
       "enabled": true,
-      "labelPosition": "bottom"
+      "labelPosition": "bottom",
+      "paletteGroupId": "other"
     },
     {
       "id": "fire-alarm-callpoint",
@@ -394,7 +410,8 @@
       "components": [],
       "extraFields": [],
       "enabled": true,
-      "labelPosition": "bottom"
+      "labelPosition": "bottom",
+      "paletteGroupId": "other"
     },
     {
       "id": "exit-light",
@@ -416,7 +433,8 @@
       "components": [],
       "extraFields": [],
       "enabled": true,
-      "labelPosition": "bottom"
+      "labelPosition": "bottom",
+      "paletteGroupId": "other"
     },
     {
       "id": "evacuation-device",
@@ -438,7 +456,8 @@
       "components": [],
       "extraFields": [],
       "enabled": true,
-      "labelPosition": "bottom"
+      "labelPosition": "bottom",
+      "paletteGroupId": "other"
     }
   ],
   "findingCategories": [
@@ -453,5 +472,27 @@
   "wordingSets": [],
   "reportDefaults": {
     "workContent": ""
-  }
+  },
+  "paletteGroupMaster": [
+    {
+      "id": "door",
+      "name": "扉・シャッター",
+      "color": "#1769aa"
+    },
+    {
+      "id": "smoke",
+      "name": "排煙設備",
+      "color": "#19a18e"
+    },
+    {
+      "id": "light",
+      "name": "非常灯",
+      "color": "#d99d2b"
+    },
+    {
+      "id": "other",
+      "name": "その他",
+      "color": "#705ab0"
+    }
+  ]
 }
