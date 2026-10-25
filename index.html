@@ -14,7 +14,7 @@
 </head>
 <body>
   <header class="topbar">
-    <div class="brand"><span class="brand-mark">点</span><div><strong>現場点検ノート</strong><small>オフライン試作 0.55</small></div></div>
+    <div class="brand"><span class="brand-mark">点</span><div><strong>現場点検ノート</strong><small>オフライン試作 0.56</small></div></div>
     <div class="top-actions"><span id="networkBadge" class="badge">接続確認中</span><span id="offlineBadge" class="badge offline-pending" title="アプリ本体のオフライン保存状態">オフライン確認中</span><button id="newProjectBtn" class="btn btn-outline">新規案件</button><button id="deleteProjectBtn" class="btn btn-delete-project">案件削除</button><button id="saveProjectBtn" class="btn btn-light">案件を書き出す</button><button id="openProjectBtn" class="btn btn-outline">案件を開く</button><input id="projectFile" type="file" accept=".zip,application/zip" hidden></div>
   </header>
   <main class="app-shell" id="appShell">
@@ -29,7 +29,8 @@
         <div class="zoom-controls"><button id="zoomOut" class="icon-btn" aria-label="縮小">−</button><span id="zoomLabel">100%</span><button id="zoomIn" class="icon-btn" aria-label="拡大">＋</button><button id="fitBtn" class="icon-btn" title="ページ全体">全体</button><button id="issueFocusBtn" class="icon-btn view-action" title="指摘表示モード" aria-label="指摘表示モード">!</button><button id="fieldModeBtn" class="icon-btn view-action" title="現場管理モードへ切り替え" aria-label="現場管理モードへ切り替え">現場</button><button id="fullscreenBtn" class="icon-btn view-action" title="図面を全画面表示" aria-label="図面を全画面表示">⛶</button><button id="printPageBtn" class="icon-btn view-action" title="表示中の図面を印刷" aria-label="表示中の図面を印刷" disabled>▣</button></div>
       </div>
       <div class="drawing-area" id="drawingArea">
-        <div class="empty-state" id="emptyState"><div class="empty-icon">▧</div><h2>図面PDFを読み込んでください</h2><p>読み込んだ図面はこのiPad内に保存できます。<br>現場では通信なしで記録できる設計です。</p><button id="emptyPdfBtn" class="btn btn-primary">PDFを選択</button></div>
+        <div class="empty-state" id="emptyState"><div class="empty-icon">▧</div><h2>図面PDFを読み込んでください</h2><p>読み込んだ図面はこのiPad内に保存できます。<br>現場では通信なしで記録できる設計です。</p><button id="emptyPdfBtn" class="btn btn-primary">PDFを選択</button><button id="emptyFloorBtn" class="btn btn-light">図面なしでフロアノートを作成</button></div>
+        <div id="floorNoteBoard" class="floor-note-board" hidden></div>
         <div class="page-wrap" id="pageWrap" hidden>
           <canvas id="pdfCanvas"></canvas>
           <div id="markerLayer" class="marker-layer"></div>
@@ -38,7 +39,7 @@
       <div class="map-footer"><span id="markerCount">設備 0件</span><span id="pdfName">図面未選択</span><span id="viewModeLabel" class="view-mode-label" hidden>指摘表示</span></div>
     </section>
     <aside class="side-panel" id="sidePanel">
-      <div class="panel-tabs"><button class="tab active" data-tab="placement" id="placementTabButton">設備配置</button><button class="tab" data-tab="equipment" id="equipmentTabButton">検査一覧</button><button class="tab" data-tab="pages">ページ</button><button class="tab" data-tab="basic">基本設定</button><button id="panelCloseBtn" class="panel-close" title="パネルを閉じる" aria-label="パネルを閉じる">×</button></div>
+      <div class="panel-tabs"><button class="tab active" data-tab="placement" id="placementTabButton">設備配置</button><button class="tab" data-tab="equipment" id="equipmentTabButton">検査一覧</button><button class="tab" data-tab="pages">ページ</button><button class="tab" data-tab="floor">フロアノート</button><button id="panelCloseBtn" class="panel-close" title="パネルを閉じる" aria-label="パネルを閉じる">×</button></div>
       <section id="placementTab" class="panel-content">
         <div class="panel-heading"><div><h2>設備を配置</h2><p>種類を選び、図面上の位置をタップ</p></div></div>
         <div id="iconPalette" class="icon-palette"></div>
@@ -54,7 +55,7 @@
         <div class="panel-heading"><div><h2>ページ・設備数量</h2><p>ページ名と設備名別の数量</p></div><button id="pageCountCsvBtn" class="btn btn-light" type="button" disabled>数量CSV</button></div>
         <div id="pageList" class="page-list"><div class="list-empty">図面PDFを読み込むとページが表示されます</div></div>
       </section>
-      <section id="basicTab" class="panel-content" hidden><div id="basicSettings"></div></section>
+      <section id="floorTab" class="panel-content" hidden><div id="floorNotesPanel"></div></section>
     </aside>
     <button id="panelReopenBtn" class="panel-reopen" hidden>メニューを表示</button>
   </main>
