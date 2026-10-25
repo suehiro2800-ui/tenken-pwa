@@ -139,3 +139,17 @@ label.check-field input[type="checkbox"]{margin-top:2px}
 @media(max-width:600px){.work-check-list{grid-template-columns:minmax(0,1fr)}}
 
 .finding-proposal>span{font-weight:700;color:#38506b}.finding-proposal>small{font-size:10px;line-height:1.5;color:var(--muted)}
+
+/* v0.52: quick finding buttons and per-icon editor */
+.quick-findings{padding:10px;border:1px solid #ccddec;border-radius:10px;background:#f5f9fe;margin-bottom:14px}
+.quick-findings .form-section{margin:0 0 8px}.quick-findings .form-section small{font-size:10px;font-weight:400;color:#5a718a}
+.quick-finding-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.quick-finding-button{min-width:0;min-height:52px;padding:10px;border:1px solid #b3c9e0;border-radius:9px;background:#fff;color:#20496d;text-align:left;font:inherit;cursor:pointer;overflow-wrap:anywhere;touch-action:manipulation}
+.quick-finding-button strong,.quick-finding-button small{display:block}.quick-finding-button strong{font-size:12px}.quick-finding-button small{font-size:9px;line-height:1.4;color:#6b7b8c;margin-top:4px}.quick-finding-button:active{background:#dceafa}.quick-finding-button:focus-visible{outline:2px solid #2867bd;outline-offset:2px}
+.quick-finding-help{margin:8px 0 0;font-size:10px;line-height:1.6;color:#657b92}.finding-quick-actions{display:flex;justify-content:flex-end;margin-top:6px}.finding-quick-actions .text-btn{padding:7px 3px}
+.quick-finding-highlight{outline:2px solid #2e78bc;outline-offset:2px}.quick-editor-card{border:1px solid #d9e3ed;border-radius:9px;padding:10px;margin-bottom:10px}.quick-editor-actions{display:flex;gap:6px;align-items:center;margin-bottom:10px}.quick-editor-actions strong{flex:1;font-size:11px}.quick-editor-actions button{padding:6px 9px;border:1px solid #d3dce6;border-radius:6px;background:#fff;color:#3b5570;cursor:pointer}.quick-editor-actions button:disabled{opacity:.35;cursor:default}
+@media(max-width:450px){.quick-finding-grid{grid-template-columns:minmax(0,1fr)}}
+/* Keep project controls inside the drawing column on narrower screens. */
+.project-strip{height:auto;min-height:76px;flex-wrap:wrap;flex-shrink:0}
+.project-fields,.project-buttons,.top-actions{min-width:0;max-width:100%;flex-wrap:wrap}
+@media(max-width:680px){.project-strip{gap:8px}.project-buttons{flex-direction:row}}
