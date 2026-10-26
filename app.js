@@ -3,8 +3,8 @@ import * as pdfjsLib from './vendor/pdf.min.mjs';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = './vendor/pdf.worker.min.mjs';
 const DB_NAME='tenken-pwa-local', DB_VERSION=1, STORE='projects';
-const APP_VERSION='0.60';
-const OFFLINE_CACHE_NAME='tenken-shell-v60';
+const APP_VERSION='0.60.1';
+const OFFLINE_CACHE_NAME='tenken-shell-v601';
 const ENV_SETTINGS_KEY='tenken-pwa-environment-settings-v1';
 const COUNT_EXCLUDED_DEFAULTS=new Set(['special','reference-photo','free-memo']);
 const DEFAULT_PALETTE_FAVORITES=new Set(['special','reference-photo','free-memo']);
@@ -87,6 +87,7 @@ function movePaletteType(id,delta){const i=state.types.findIndex(t=>t.id===id),n
 function newMarker(type,x,y,page){const components=measurementComponentLabels(type).map(label=>({id:uid('leaf'),label,height:'',width:'',time:'',force:'',hazard:''}));const severity=type.id==='reference-photo'?'参考写真':type.id==='free-memo'||type.recordKind==='meeting'?'メモ':'';const mark=type.mark||'';const next=state.project.markers.filter(m=>m.typeId===type.id).length+1;return {id:uid('marker'),typeId:type.id,...(type.recordKind?{recordKind:type.recordKind}:{}),serial:String(next),mark,memo:'',page,x,y,size:Number(type.defaultSize)||42,rotation:0,flipX:false,flipY:false,labelPosition:type.labelPosition||'bottom',countIncluded:type.countByDefault!==false,checked:false,extraValues:{},components,velocities:['','','','',''],height:'',width:'',findings:severity?[newFinding({id:uid('finding'),severity,title:'',detail:'',proposal:'',photoSize:1600,photos:[]})]:[]}}
 
 function init(){
+  const versionLabel=document.querySelector('.brand small');if(versionLabel)versionLabel.textContent=`オフライン試作 ${APP_VERSION}`;
   state.envSettings=readEnvironmentSettings();
   $('#pdfBtn').onclick=()=>$('#pdfFile').click();$('#emptyPdfBtn').onclick=()=>$('#pdfFile').click();$('#pdfFile').onchange=onPdfSelected;
   $('#newProjectBtn').onclick=newProjectDialog;$('#emptyFloorBtn').onclick=()=>{switchTab('floor');createFloorNoteDialog()};
