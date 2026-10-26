@@ -189,3 +189,17 @@ label.check-field input[type="checkbox"]{margin-top:2px}
 .type-finding-category-settings .check-field input[type="radio"]{width:16px!important;min-width:16px;height:16px;flex:0 0 16px;margin:2px 0 0;padding:0}
 
 @media(max-width:680px){.viewer-toolbar{height:auto;min-height:40px;flex-shrink:0;flex-wrap:wrap;align-items:center;gap:6px;padding-top:6px;padding-bottom:6px}.viewer-toolbar .tool-hint{order:3;flex-basis:100%;flex-wrap:wrap;min-width:0;line-height:1.5}.viewer-toolbar #modeHint{min-width:0;flex:1;overflow-wrap:anywhere}.viewer-toolbar .zoom-controls{margin-left:auto;min-width:0;flex-wrap:wrap}.viewer-toolbar .page-controls{min-width:0}}
+
+/* v0.59: publication checkboxes stay independent from category and form layout. */
+.finding-publication{margin:8px 0 12px;padding:10px 12px;border:1px solid #d9e4ee;border-radius:9px;background:#f5f8fc;display:grid;gap:4px}
+.finding-publication[hidden]{display:none}
+.finding-publication>strong{font-size:12px;color:#35506b}
+.finding-publication-options{display:flex;flex-wrap:wrap;gap:4px 18px;min-width:0}
+.finding-publication-options label{display:flex;align-items:center;gap:8px;min-height:42px;font-size:13px;cursor:pointer}
+.finding-publication-options input[type=checkbox]{width:18px!important;height:18px!important;flex:0 0 18px;margin:0;accent-color:#1769aa}
+.finding-publication>small{font-size:11px;line-height:1.6;color:#667b91;overflow-wrap:anywhere}
+.finding-publication .text-btn{justify-self:start;min-height:36px;padding:4px 0;text-align:left}
+.finding-publication-default-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #e1e8f0}
+.finding-publication-default-row>strong{font-size:13px;overflow-wrap:anywhere}
+.publication-excluded-note{padding:10px;background:#fff6e7;border:1px solid #ead2a7;border-radius:8px}
+@media(max-width:520px){.finding-publication-default-row{grid-template-columns:minmax(0,1fr);gap:0}.finding-publication-options{gap:4px 16px}}
