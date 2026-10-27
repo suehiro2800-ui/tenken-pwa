@@ -1,22 +1,30 @@
-const CACHE_NAME = 'tenken-shell-v601';
+const CACHE_NAME = 'tenken-shell-v61';
 const APP_FILES = [
-  './', './index.html', './app.css', './app.js', './admin.js', './manifest.json', './icon.svg',
+  './', './index.html', './app.css', './app.js', './admin.js', './delivery.js', './manifest.json', './icon.svg',
   './apple-touch-icon.png', './icon-192.png', './icon-512.png',
   './vendor/pdf.min.mjs', './vendor/pdf.worker.min.mjs', './vendor/jszip.min.js'
 ];
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE_NAME);
-    await cache.addAll(APP_FILES);
-    await self.skipWaiting();
+    // Fetch the complete new shell before offering an update. Existing clients
+    // keep using their active worker until they explicitly save and accept.
+    await cache.addAll(APP_FILES.map(path=>new Request(path,{cache:'reload'})));
   })());
 });
+self.addEventListener('message',event=>{if(event.data?.type==='SKIP_WAITING')event.waitUntil(self.skipWaiting())});
 self.addEventListener('activate', event => {
-  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k.startsWith('tenken-shell-') && k !== CACHE_NAME).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+  // Other open tabs can still be running the previous app. Retain their shell.
+  event.waitUntil(self.clients.claim());
 });
 self.addEventListener('fetch', event => {
   const request = event.request;
   if (request.method !== 'GET' || new URL(request.url).origin !== self.location.origin) return;
+  const fileName=new URL(request.url).pathname.split('/').pop();
+  if(fileName==='initial-settings.json'||fileName==='app-status.json'){
+    // Operational notices/settings must never fall back to an old cached copy.
+    event.respondWith(fetch(new Request(request,{cache:'no-store'})).catch(()=>Response.error()));return;
+  }
   event.respondWith((async () => {
     const cache = await caches.open(CACHE_NAME);
     const cached = await cache.match(request);

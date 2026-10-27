@@ -3,7 +3,7 @@ export function installBasicPackManager(api) {
   const DRAFT='tenken-basic-draft-v1', HISTORY='tenken-basic-history-v1', PIN='tenken-admin-pin-v1';
   const clone=v=>structuredClone(v), norm=v=>String(v||'').normalize('NFKC').replace(/\s+/g,'').toLowerCase();
   let unlocked=false, draft, tab='types', root;
-  const labels={types:'アイコン',paletteGroupMaster:'分類・表示',wordingSets:'文言セット',rules:'入力・報告設定',initial:'初期設定',transfer:'取込・更新'};
+  const labels={types:'アイコン',paletteGroupMaster:'分類・表示',wordingSets:'文言セット',rules:'入力・報告設定',initial:'初期設定',transfer:'取込・更新',delivery:'配布・お知らせ'};
   const esc=api.escapeHtml;
   const el=(tag,text,action)=>{const e=document.createElement(tag);if(text)e.textContent=text;if(action)e.onclick=action;return e};
   const message=text=>{root.querySelector('[role=status]').textContent=text};
@@ -54,6 +54,7 @@ export function installBasicPackManager(api) {
       body.append(el('p','配置時のサイズ・整理記号・常用・入力画面は「アイコン」タブで設定します。図面や設備の配置座標は基本セットに含めません。'));
     }
     if(tab==='transfer')transfer(body);
+    if(tab==='delivery')deliverySettings(body);
     const footer=el('footer');footer.append(el('button','下書きを保存',persist),el('button','基本セットを一式更新',commit));box.append(footer);
   }
   function input(parent,label,value,change,type='text',options){const wrap=el('label');wrap.className='field';wrap.append(el('span',label));const e=el(type==='textarea'?'textarea':type==='select'?'select':'input');if(type!=='textarea'&&type!=='select')e.type=type;if(options)for(const [v,n]of options){const o=el('option',n);o.value=v;e.append(o)}e.value=value??'';e.oninput=()=>change(type==='number'?Number(e.value):e.value);wrap.append(e);parent.append(wrap);return e}
@@ -115,13 +116,25 @@ export function installBasicPackManager(api) {
       const before=api.read();const h=JSON.parse(localStorage.getItem(HISTORY)||'[]');h.unshift({date:new Date().toISOString(),pack:before});localStorage.setItem(HISTORY,JSON.stringify(h.slice(0,3)));
       const pack=clone(draft);pack.updatedAt=new Date().toISOString();if(!api.write(pack))return;draft=pack;persist();message('基本セットを一式更新しました。新規案件から適用されます。');
     }catch(e){message(e.message)}}
+  function deliverySettings(p){
+    p.append(el('h3','初めて使う端末へ基本セットを配布'),el('p','「基本セットを一式更新」で確定した内容を書き出します。initial-settings.json をアプリと同じ公開フォルダへ置いてください。案件・設定・管理者の下書きがある端末には適用しません。通常の更新ZIPにこのファイルは含めません。'));
+    p.append(el('button','確定済みセットを initial-settings.json に書き出す',()=>{try{const pack=api.read();validate(pack);api.download(new Blob([JSON.stringify(pack,null,2)],{type:'application/json'}),'initial-settings.json')}catch(e){message(e.message)}}));
+    p.append(el('h3','メンテナンス・更新のお知らせ'),el('p','下の内容を app-status.json に書き出し、同じ公開フォルダへ置きます。メンテナンス中も入力・保存は続けられます。終了時はチェックを外したファイルを再公開してください。アプリを新しい版へ更新するときは、一式の配置が完了してから公開版数を変更します。'));
+    let saved={};try{saved=JSON.parse(localStorage.getItem('tenken-delivery-notice-draft-v1')||'{}')}catch{}
+    const version=input(p,'公開するアプリの版数',saved.latestVersion||document.querySelector('.brand small')?.textContent.match(/(\d+\.\d+(?:\.\d+)?)$/)?.[1]||'',()=>{});
+    const maintenance=check(p,'メンテナンス中のお知らせを出す',saved.maintenance?.enabled===true,()=>{});
+    const maintenanceText=input(p,'メンテナンスの説明',saved.maintenance?.message||'公開ファイルを更新しています。入力・保存は続けられます。終了後に更新してください。',()=>{},'textarea');
+    const notice=input(p,'通常のお知らせ（任意）',saved.notice?.message||'',()=>{},'textarea');
+    p.append(el('button','app-status.json を書き出す',()=>{if(!/^\d+\.\d+(?:\.\d+)?$/.test(version.value.trim())){message('版数は 0.61 や 0.61.1 の形式で入力してください');return}const data={format:'tenken-pwa-status',schemaVersion:1,latestVersion:version.value.trim(),maintenance:{enabled:maintenance.checked,message:maintenanceText.value.trim()},notice:{message:notice.value.trim()}};try{localStorage.setItem('tenken-delivery-notice-draft-v1',JSON.stringify(data))}catch{}api.download(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),'app-status.json');message('お知らせを書き出しました。公開フォルダへアップロードしてください。')}));
+    p.append(el('p','オンライン起動時・画面へ戻った時・表示中は約2分ごとにお知らせを確認します。オフラインでは通常どおり使えます。作業中の画面は自動で再読み込みしません。入力を保存してから「保存して更新」で切り替えます。'));
+  }
   function transfer(p){
     p.append(el('h3','現在の案件から取り込む'),el('p','分類 → アイコン → 文言の順に取り込めます。同じID・名前・文言の項目は、追加前に比較します。'));
     for(const key of ['paletteGroupMaster','equipmentGroupMaster','workCategoryMaster','types','wordingSets']){const group=el('details');group.append(el('summary',collectionNames[key]));p.append(group);for(const x of api.projectPack()[key]||[]){const row=el('div');row.className='basic-item';const match=draft[key].find(y=>y.id===x.id||norm(y.name||y.text)===norm(x.name||x.text));row.append(el('span',(x.name||x.text)+(match?'（登録済み候補あり）':'')),el('button','比較して取込',()=>compare(key,x,match)));group.append(row)}}
     p.append(el('h3','ファイルと履歴'));
     p.append(el('button','基本セットを書き出す',()=>{try{validate(draft);api.download(new Blob([JSON.stringify(draft,null,2)],{type:'application/json'}),'基本セット.json')}catch(e){message(e.message)}}));
     const file=input(p,'基本セットJSONを下書きへ読み込む','',()=>{},'file');file.accept='.json';file.onchange=async()=>{try{const data=JSON.parse(await file.files[0].text());validate(data);if(confirm('現在の下書きを読み込んだ内容に置き換えますか？')){draft=data;persist();render()}}catch(e){message('読み込めません：'+e.message)}};
-    p.append(el('p','他の利用者への配布は、書き出したJSONをGitHubへアップロードします。この画面での更新はこの端末に適用されます。'));
+    p.append(el('p','他の利用者の初回設定には「配布・お知らせ」から initial-settings.json を書き出し、アプリと同じ公開フォルダへ置きます。設定済み端末は自動上書きしません。'));
     let history=[];try{history=JSON.parse(localStorage.getItem(HISTORY)||'[]')}catch{}
     for(const entry of history)p.append(el('button',new Date(entry.date).toLocaleString('ja-JP')+' の更新前を下書きに復元',()=>{if(confirm('この履歴を下書きに戻しますか？ 一式更新するまでは初期設定は変わりません。')){draft=clone(entry.pack);persist();render()}}));
     p.append(el('button','確定済み基本セットから下書きを作り直す',()=>{if(confirm('編集途中の下書きを破棄しますか？')){draft=clone(api.read());persist();render()}}));
@@ -133,5 +146,5 @@ export function installBasicPackManager(api) {
     const accept=replace=>{if(replace&&match){const i=draft[key].indexOf(match);draft[key][i]={...clone(source),id:match.id}}else{const item=clone(source);if(draft[key].some(x=>x.id===item.id||norm(x.name||x.text)===norm(item.name||item.text))){const name=prompt('重複を避けるため、別の名前・文言を入力してください',item.name||item.text);if(!name?.trim())return;if(draft[key].some(x=>norm(x.name||x.text)===norm(name))){message('同じ名前・文言が存在します');return}item.id=crypto.randomUUID();if(key==='wordingSets')item.text=name.trim();else item.name=name.trim()}draft[key].push(item)}persist();render()};
     if(match)p.append(el('button','既存を更新',()=>accept(true)));p.append(el('button',match?'別として追加':'新規追加',()=>accept(false)),el('button','取り込まない',render));
   }
-  return {open:login,isUnlocked:()=>unlocked};
+  return {open:login,isUnlocked:()=>unlocked,validate};
 }
