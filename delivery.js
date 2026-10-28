@@ -1,5 +1,5 @@
 // Optional published settings and notices. No project data is fetched or sent.
-const PROTECTED_KEYS=['tenken-pwa-environment-settings-v1','tenken-basic-draft-v1','tenken-basic-history-v1','tenken-admin-pin-v1'];
+const PROTECTED_KEYS=['tenken-pwa-environment-settings-v1','tenken-basic-draft-v1','tenken-basic-history-v1','tenken-admin-pin-v1','tenken-personal-settings-v1'];
 export async function fetchPublishedJson(path,timeout=4000){
   const abort=new AbortController(),timer=setTimeout(()=>abort.abort(),timeout);
   try{const response=await fetch(new URL(path,location.href),{cache:'no-store',signal:abort.signal});if(!response.ok)return null;return await response.json()}finally{clearTimeout(timer)}

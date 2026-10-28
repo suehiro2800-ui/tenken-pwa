@@ -65,19 +65,18 @@ export function installBasicPackManager(api) {
     items.forEach((item,i)=>{const row=el('div');row.className='basic-item';row.append(el('span',item.name||item.text||item.id),el('button','編集',()=>edit(key,i)));
       if(key==='types'){row.prepend(preview(item));for(const [d,n]of [[-1,'↑'],[1,'↓']])row.append(el('button',n,()=>{const j=i+d;if(j<0||j>=items.length)return;[items[i],items[j]]=[items[j],items[i]];items.forEach((t,n)=>t.paletteOrder=n);persist();render()}))}
       row.append(el('button','削除',()=>{if(!confirm('基本セットの下書きから削除しますか？ 作成済み案件は変更されません。'))return;
-        if(key==='types'&&api.defaultTypeIds.includes(item.id)){message('標準アイコンは「配置メニューに表示」をオフにしてください。');return}
+        if(key==='types'&&items.length<=1){message('アイコンは1つ以上必要です。別のアイコンを追加してから削除してください。');return}
         if(key!=='types'&&key!=='wordingSets'&&(items.length<=1||draft.types.some(t=>(key==='paletteGroupMaster'?(t.paletteGroupId||t.category):key==='equipmentGroupMaster'?t.majorGroupId:(t.workCategoryIds||[]).includes(item.id)?item.id:'')===item.id)||key==='equipmentGroupMaster'&&draft.wordingSets.some(w=>w.equipmentGroupId===item.id))){message('使用中、または最後の分類は削除できません。先に所属を変更してください。');return}
         items.splice(i,1);persist();render()}));rows.append(row)});
     p.append(el('button','＋ '+collectionNames[key]+'を追加',()=>edit(key,-1)));
   }
-  function preview(t){const wrap=el('div');wrap.className='basic-preview';const art=el('span');art.className='palette-art';art.dataset.category=t.category||'other';art.style.setProperty('--type-color',t.color||'#1769aa');art.style.color=t.textColor||'#ffffff';art.style.width=art.style.height=(Math.max(12,Math.min(90,Number(t.defaultSize)||22)))+'px';
-    if(/^data:image\/png;base64,/.test(t.iconData||'')){const img=el('img');img.src=t.iconData;img.className='custom-icon';img.alt='';art.append(img)}else art.textContent=t.glyph||'設';wrap.append(art,el('small',(t.mark||'')+'1'));wrap.dataset.labelPosition=t.labelPosition||'bottom';return wrap}
+  function preview(t,full=false){const wrap=el('div');wrap.className='basic-preview';wrap.innerHTML=full?api.typePreviewHtml(t):api.markerPreviewHtml(t);return wrap}
   function edit(key,index){
     root.classList.add('editing');const items=draft[key]||(draft[key]=[]),isType=key==='types';
     let item=index>=0?clone(items[index]):isType?{id:crypto.randomUUID(),name:'',glyph:'設',category:'other',paletteGroupId:draft.paletteGroupMaster[0].id,majorGroupId:draft.equipmentGroupMaster[0].id,form:'basic',color:'#1769aa',textColor:'#ffffff',defaultSize:22,mark:'',enabled:true,countByDefault:true,paletteFavorite:false,components:[],extraFields:[],quickFindings:[],workCategoryIds:[]}:{id:crypto.randomUUID(),...(key==='wordingSets'?{text:'',severity:'要是正',equipmentGroupId:''}:{name:'',...(key==='paletteGroupMaster'?{color:'#705ab0'}:{})})};
     const content=root.querySelector('.basic-manager-content');content.replaceChildren();const actions=el('div');content.append(el('h3',collectionNames[key]+'の編集'),actions);let previewHost;
-    const update=(k,v)=>{item[k]=v;if(previewHost)previewHost.replaceChildren(preview(item))};
-    if(isType){previewHost=el('div');previewHost.className='basic-preview-panel';previewHost.append(preview(item));content.append(previewHost)}
+    const update=(k,v)=>{item[k]=v;if(previewHost)previewHost.replaceChildren(preview(item,true))};
+    if(isType){previewHost=el('div');previewHost.className='basic-preview-panel';previewHost.append(preview(item,true));content.append(previewHost)}
     input(content,key==='wordingSets'?'不良文言':'名前',item.text??item.name,v=>update(key==='wordingSets'?'text':'name',v),key==='wordingSets'?'textarea':'text');
     if(isType){
       for(const [k,n,type]of [['glyph','表示文字','text'],['mark','整理記号','text'],['color','背景色','color'],['textColor','文字色','color'],['defaultSize','標準サイズ（12～90）','number'],['countUnit','数量単位','text']])input(content,n,item[k],v=>update(k,v),type);
@@ -88,7 +87,7 @@ export function installBasicPackManager(api) {
       check(content,'調査区分は共通設定を使う',!Array.isArray(item.findingCategorySelection),v=>{item.findingCategorySelection=v?null:[...draft.findingCategories];categoryChoices()});
       const cats=el('div');content.append(cats);function categoryChoices(){cats.replaceChildren();if(Array.isArray(item.findingCategorySelection))for(const c of draft.findingCategories)check(cats,c,item.findingCategorySelection.includes(c),v=>{const ids=new Set(item.findingCategorySelection);v?ids.add(c):ids.delete(c);item.findingCategorySelection=[...ids]})}categoryChoices();
       const upload=input(content,'アイコン画像（PNG）','',async()=>{},'file');upload.accept='image/png';upload.onchange=async()=>{try{if(upload.files[0])update('iconData',await api.iconToDataUrl(upload.files[0]))}catch{message('画像を読み込めませんでした')}};
-      content.append(el('button','標準画像に戻す',()=>update('iconData','')));
+      content.append(el('button','登録画像を削除（表示文字に戻す）',()=>{upload.value='';update('iconData','')}));
       const q=el('div');content.append(q);function quick(){q.replaceChildren();q.append(el('h4','常用ボタン'));(item.quickFindings||[]).forEach((x,i)=>{const row=el('fieldset');q.append(row);for(const [k,n]of [['label','ボタン名'],['title','内容・概要'],['detail','補足'],['proposal','改善提案']])input(row,n,x[k]||'',v=>x[k]=v);input(row,'区分',x.severity||'要是正',v=>x.severity=v,'select',draft.findingCategories.map(c=>[c,c]));row.append(el('button','削除',()=>{item.quickFindings.splice(i,1);quick()}))});q.append(el('button','＋ 常用ボタンを追加',()=>{(item.quickFindings||=[]).push({id:crypto.randomUUID(),label:'',title:'',detail:'',severity:'要是正'});quick()}))}quick();
     }else if(key==='wordingSets'){
       input(content,'設備大分類',item.equipmentGroupId,v=>item.equipmentGroupId=v,'select',[['','全設備共通'],...draft.equipmentGroupMaster.map(g=>[g.id,g.name])]);input(content,'区分',item.severity,v=>item.severity=v,'select',draft.findingCategories.map(c=>[c,c]));
@@ -98,9 +97,15 @@ export function installBasicPackManager(api) {
       if(items.some((x,i)=>i!==index&&norm(x.name||x.text)===norm(item.name||item.text))){message('同じ名前・文言が登録されています。既存項目を編集してください。');return false}
       if(isType&&(!Number.isFinite(item.defaultSize)||item.defaultSize<12||item.defaultSize>90)){message('サイズは12～90で入力してください');return false}
       if(isType&&Array.isArray(item.findingCategorySelection)&&!item.findingCategorySelection.length){message('調査区分を1つ以上選んでください');return false}
+      if(isType)item.sizeVersion=1;
       if(index<0){items.push(clone(item));index=items.length-1}else items[index]=clone(item);persist();if(next)edit(key,-1);return true;
     }
     actions.append(el('button','保存',()=>save()),el('button','保存して次を追加',()=>save(true)),el('button','複製して作成',()=>{if(!save())return;const copy=clone(item);copy.id=crypto.randomUUID();if(key==='wordingSets')copy.text+='（複製）';else copy.name+='（複製）';items.push(copy);persist();edit(key,items.length-1)}),el('button','一覧へ戻る',()=>{if(confirm('未保存の編集を破棄して一覧に戻りますか？'))render()}));
+    if(isType&&index>=0)actions.append(el('button','このアイコンを削除',()=>{
+      if(items.length<=1){message('アイコンは1つ以上必要です。別のアイコンを追加してから削除してください。');return}
+      if(!confirm('このアイコンを基本セットの下書きから削除しますか？ 作成済み案件は変更されません。'))return;
+      items.splice(index,1);persist();render();
+    }));
   }
   function validate(pack){
     if(pack?.format!=='tenken-pwa-settings'||!Array.isArray(pack.types)||!pack.types.length)throw Error('基本セットの形式が違います');
