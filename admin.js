@@ -6,9 +6,10 @@ export function installBasicPackManager(api) {
   let unlocked=false, draft, tab='types', root, editor=null;
   const labels={types:'アイコン',paletteGroupMaster:'分類・表示',wordingSets:'文言セット',rules:'入力・報告設定',initial:'初期設定',transfer:'取込・更新',delivery:'配布・お知らせ'};
   const esc=api.escapeHtml;
+  const imageCount=pack=>(pack.types||[]).filter(t=>!!t.iconData).length;
   const el=(tag,text,action)=>{const e=document.createElement(tag);if(text)e.textContent=text;if(action)e.onclick=action;return e};
   const message=text=>{root.querySelector('[role=status]').textContent=text};
-  function persist(pack=draft){try{localStorage.setItem(DRAFT,JSON.stringify(pack));message('下書き保存済みです。新規案件に使うには「基本セットを一式更新」を押してください。');return true}catch{message('下書きを保存できません。空き容量を確認し、書き出してください。');return false}}
+  function persist(pack=draft){try{localStorage.setItem(DRAFT,JSON.stringify(pack));message('下書き保存済みです。画像付きアイコン '+imageCount(pack)+' 種を含みます。新規案件に使うには「基本セットを一式更新」を押してください。');return true}catch{message('下書きを保存できません。空き容量を確認し、書き出してください。');return false}}
   const canLeave=text=>!editor?.dirty()||confirm(text);
   const noteEdit=()=>{if(editor)message(editor.dirty()?'未保存の変更があります。「保存」で下書きに保存してください。':'編集中の項目に未保存の変更はありません。')};
   function instructions(parent,title,steps,note){
@@ -41,6 +42,7 @@ export function installBasicPackManager(api) {
     const header=el('header');header.append(el('h2','基本セット管理'),el('button','閉じる',()=>{if(!canLeave('未保存の項目編集を破棄して閉じますか？'))return;if(!persist())return;root.remove()}),el('button','管理者モード終了',()=>{if(!canLeave('未保存の項目編集を破棄して終了しますか？'))return;if(!persist())return;unlocked=false;root.remove()}));box.append(header);
     const flow=el('div');flow.className='basic-save-flow';for(const text of ['① 項目を編集','②「保存」で下書き保存','③「基本セットを一式更新」で確定'])flow.append(el('span',text));box.append(flow);
     box.append(el('p','ここで作るのは共通のひな形です。確定後、基本セットを使う次の新規案件へ反映します。現在の案件・保存済みの自分用初期設定は変わりません。'));
+    box.append(el('p',`画像付きアイコン：下書き ${imageCount(draft)}種 ／ 確定済み ${imageCount(api.read())}種。登録画像は設定JSONに含めて渡します。`));
     const nav=el('nav');nav.setAttribute('aria-label','基本セットの設定');for(const [key,name]of Object.entries(labels)){const b=el('button',name,()=>{if(!canLeave('未保存の項目編集を破棄しますか？'))return;tab=key;render()});b.setAttribute('aria-pressed',String(tab===key));nav.append(b)}box.append(nav);
     const status=el('p','各項目の「保存」は下書き保存です。新規案件に使うには「基本セットを一式更新」で確定します。');status.setAttribute('role','status');box.append(status);
     const body=el('div');body.className='basic-manager-content';box.append(body);
@@ -104,7 +106,7 @@ export function installBasicPackManager(api) {
       '「保存」で下書き保存します。続けて作る場合は「保存して次を追加」を使います。',
       '「一覧へ戻る」で確認し、最後に「基本セットを一式更新」で共通のひな形として確定します。'
     ],isType?'背景色は「分類の色に合わせる」なら分類色に連動、「このアイコンだけ別の色にする」なら個別指定です。':'保存と一式更新は役割が異なります。現在の案件を変更したい場合は、通常の環境設定で編集します。');
-    const actions=el('div');content.append(el('h3',collectionNames[key]+'の編集'),actions);let previewHost;
+    const actions=el('div');content.append(el('h3',collectionNames[key]+'の編集'),actions);let previewHost,imageLoading=false,imageError='',imageSequence=0;
     const update=(k,v)=>{item[k]=v;if(isType)syncPaletteColors({types:[item],paletteGroupMaster:draft.paletteGroupMaster});if(previewHost)previewHost.replaceChildren(preview(item,true));noteEdit()};
     if(isType){item.paletteGroupId=item.paletteGroupId||(draft.paletteGroupMaster.some(g=>g.id===item.category)?item.category:draft.paletteGroupMaster[0].id);item.majorGroupId=item.majorGroupId||draft.equipmentGroupMaster[0].id;item.form=item.form||'basic';item.labelPosition=item.labelPosition||'bottom';syncPaletteColors({types:[item],paletteGroupMaster:draft.paletteGroupMaster});previewHost=el('div');previewHost.className='basic-preview-panel';previewHost.append(preview(item,true));content.append(previewHost)}
     input(content,key==='wordingSets'?'不良文言':'名前',item.text??item.name,v=>update(key==='wordingSets'?'text':'name',v),key==='wordingSets'?'textarea':'text');
@@ -121,14 +123,23 @@ export function installBasicPackManager(api) {
       for(const id of item.workCategoryIds||[])if(!draft.workCategoryMaster.some(g=>g.id===id))check(work,'参照先がない作業区分（'+id+'）— チェックを外して解除',true,v=>{item.workCategoryIds=v?[...new Set([...(item.workCategoryIds||[]),id])]:(item.workCategoryIds||[]).filter(x=>x!==id)});
       check(content,'調査区分は共通設定を使う',!Array.isArray(item.findingCategorySelection),v=>{item.findingCategorySelection=v?null:[...draft.findingCategories];categoryChoices()});
       const cats=el('div');content.append(cats);function categoryChoices(){cats.replaceChildren();if(Array.isArray(item.findingCategorySelection))for(const c of draft.findingCategories)check(cats,c,item.findingCategorySelection.includes(c),v=>{const ids=new Set(item.findingCategorySelection);v?ids.add(c):ids.delete(c);item.findingCategorySelection=[...ids]})}categoryChoices();
-      const upload=input(content,'アイコン画像（PNG）','',async()=>{},'file');upload.accept='image/png';upload.onchange=async()=>{try{if(upload.files[0])update('iconData',await api.iconToDataUrl(upload.files[0]))}catch{message('画像を読み込めませんでした')}};
-      content.append(el('button','登録画像を削除（表示文字に戻す）',()=>{upload.value='';update('iconData','')}));
+      const upload=input(content,'アイコン画像（PNG）','',async()=>{},'file');upload.accept='image/png';
+      const imageStatus=el('small',item.iconData?'画像登録済みです。保存・一式更新後、設定JSONに画像も含まれます。':'画像は未登録です。画像を選択したら、読み込み完了後に保存してください。');imageStatus.setAttribute('aria-live','polite');content.append(imageStatus);
+      upload.onchange=async()=>{
+        const file=upload.files?.[0],sequence=++imageSequence,owner=editor;imageLoading=!!file;imageError='';if(!file)return;
+        imageStatus.textContent='画像を読み込み中です。完了まで保存をお待ちください。';
+        try{const data=await api.iconToDataUrl(file);if(sequence!==imageSequence||editor!==owner)return;imageLoading=false;update('iconData',data);imageStatus.textContent='画像を読み込みました。「保存」→「基本セットを一式更新」で画像も確定します。';message(imageStatus.textContent)}
+        catch(e){if(sequence!==imageSequence||editor!==owner)return;imageLoading=false;imageError='画像を読み込めませんでした。選び直すか「登録画像を削除」で取り消してください。';imageStatus.textContent=imageError;message(imageError)}
+      };
+      content.append(el('button','登録画像を削除（表示文字に戻す）',()=>{imageSequence++;imageLoading=false;imageError='';upload.value='';update('iconData','');imageStatus.textContent='画像を削除する設定です。保存すると表示文字へ戻ります。'}));
       const q=el('div');content.append(q);function quick(){q.replaceChildren();q.append(el('h4','常用ボタン'));(item.quickFindings||[]).forEach((x,i)=>{const row=el('fieldset');q.append(row);for(const [k,n]of [['label','ボタン名'],['title','内容・概要'],['detail','補足'],['proposal','改善提案']])input(row,n,x[k]||'',v=>x[k]=v);x.severity=x.severity||'要是正';input(row,'区分',x.severity,v=>x.severity=v,'select',draft.findingCategories.map(c=>[c,c]));for(const id of x.workCategoryIds||[])if(!draft.workCategoryMaster.some(g=>g.id===id))check(row,'参照先がない作業区分（'+id+'）— チェックを外して解除',true,v=>{x.workCategoryIds=v?[...new Set([...(x.workCategoryIds||[]),id])]:(x.workCategoryIds||[]).filter(i=>i!==id)});row.append(el('button','削除',()=>{item.quickFindings.splice(i,1);quick();noteEdit()}))});q.append(el('button','＋ 常用ボタンを追加',()=>{(item.quickFindings||=[]).push({id:crypto.randomUUID(),label:'',title:'',detail:'',severity:'要是正'});quick();noteEdit()}))}quick();
     }else if(key==='wordingSets'){
       item.equipmentGroupId=item.equipmentGroupId||'';item.severity=item.severity||draft.findingCategories[0];input(content,'設備大分類',item.equipmentGroupId,v=>item.equipmentGroupId=v,'select',[['','全設備共通'],...draft.equipmentGroupMaster.map(g=>[g.id,g.name])]);input(content,'区分',item.severity,v=>item.severity=v,'select',draft.findingCategories.map(c=>[c,c]));
     }else if(key==='paletteGroupMaster')input(content,'分類の色（分類に合わせるアイコンへ反映）',item.color,v=>item.color=v,'color');
     let savedItem=JSON.stringify(item);
     function save(next=false){
+      if(imageLoading){message('画像を読み込み中です。完了してから保存してください。');return false}
+      if(imageError){message(imageError);return false}
       if(!(item.name||item.text||'').trim()){message('名前・文言を入力してください');return false}
       if(items.some((x,i)=>i!==index&&norm(x.name||x.text)===norm(item.name||item.text))){message('同じ名前・文言が登録されています。既存項目を編集してください。');return false}
       if(isType&&(!Number.isFinite(item.defaultSize)||item.defaultSize<12||item.defaultSize>90)){message('サイズは12～90で入力してください');return false}
@@ -138,7 +149,7 @@ export function installBasicPackManager(api) {
       const candidate=clone(draft),nextIndex=index<0?candidate[key].length:index;if(index<0)candidate[key].push(clone(item));else candidate[key][index]=clone(item);syncPaletteColors(candidate);if(!persist(candidate))return false;draft=candidate;items=draft[key];index=nextIndex;savedItem=JSON.stringify(item);if(next)edit(key,-1);return true;
     }
     actions.append(el('button','保存',()=>save()),el('button','保存して次を追加',()=>save(true)),el('button','複製して作成',()=>{if(!save())return;const copy=clone(item);copy.id=crypto.randomUUID();if(key==='wordingSets')copy.text+='（複製）';else copy.name+='（複製）';items.push(copy);persist();edit(key,items.length-1)}),el('button','一覧へ戻る',()=>{if(canLeave('未保存の編集を破棄して一覧に戻りますか？'))render()}));
-    editor={save,dirty:()=>JSON.stringify(item)!==savedItem};
+    editor={save,dirty:()=>imageLoading||!!imageError||JSON.stringify(item)!==savedItem};
     if(isType)actions.append(el('button','このアイコンを削除',()=>{
       if(items.length<=1){message('アイコンは1つ以上必要です。別のアイコンを追加してから削除してください。');return}
       if(!confirm('このアイコンを基本セットの下書きから削除しますか？ 作成済み案件は変更されません。'))return;
@@ -167,8 +178,9 @@ export function installBasicPackManager(api) {
       const pack=clone(draft);pack.updatedAt=new Date().toISOString();if(!api.write(pack))return;draft=pack;const saved=persist();render();message(saved?'基本セットを一式更新しました。次の新規案件から適用されます（自分用初期設定がある場合はそちらが優先されます）。':'基本セットの更新は完了しましたが、下書きの保存に失敗しました。空き容量を確認してください。');
     }catch(e){message(e.message)}}
   function deliverySettings(p){
+    p.append(el('p',`配布する確定済みセットには画像付きアイコンが ${imageCount(api.read())} 種あります。下書きは ${imageCount(draft)} 種です。元PNGを別に同梱する必要はありません。`));
     p.append(el('h3','初めて使う端末へ基本セットを配布'),el('p','「基本セットを一式更新」で確定した内容を書き出します。initial-settings.json をアプリと同じ公開フォルダへ置いてください。案件・設定・管理者の下書きがある端末には適用しません。通常の更新ZIPにこのファイルは含めません。'));
-    p.append(el('button','確定済みセットを initial-settings.json に書き出す',()=>{try{const pack=api.read();validate(pack);api.download(new Blob([JSON.stringify(pack,null,2)],{type:'application/json'}),'initial-settings.json')}catch(e){message(e.message)}}));
+    p.append(el('button','確定済みセットを initial-settings.json に書き出す',()=>{try{const pack=api.read();validate(pack);api.download(new Blob([JSON.stringify(pack,null,2)],{type:'application/json'}),'initial-settings.json');message(`画像付きアイコン ${imageCount(pack)} 種を含む設定JSONを書き出しました。`)}catch(e){message(e.message)}}));
     p.append(el('h3','メンテナンス・更新のお知らせ'),el('p','下の内容を app-status.json に書き出し、同じ公開フォルダへ置きます。メンテナンス中も入力・保存は続けられます。終了時はチェックを外したファイルを再公開してください。アプリを新しい版へ更新するときは、一式の配置が完了してから公開版数を変更します。'));
     let saved={};try{saved=JSON.parse(localStorage.getItem('tenken-delivery-notice-draft-v1')||'{}')}catch{}
     const version=input(p,'公開するアプリの版数',saved.latestVersion||document.querySelector('.brand small')?.textContent.match(/(\d+\.\d+(?:\.\d+)?)$/)?.[1]||'',()=>{});
@@ -179,10 +191,11 @@ export function installBasicPackManager(api) {
     p.append(el('p','オンライン起動時・画面へ戻った時・表示中は約2分ごとにお知らせを確認します。オフラインでは通常どおり使えます。作業中の画面は自動で再読み込みしません。入力を保存してから「保存して更新」で切り替えます。'));
   }
   function transfer(p){
+    instructions(p,'画像付きの基本セットを別の端末へ渡す方法',['アイコン画像の読み込み完了を確認して「保存」し、「基本セットを一式更新」で確定します。','この画面で基本セットJSONを書き出し、別の端末で設定JSONとして読み込みます。','すでに同じアイコンがある場合は「既存の項目を更新する」を選びます。自分用初期設定として一式を揃えることもできます。'],'PNG画像はJSONに埋め込みます。アプリの更新ZIPだけでは、この端末で登録した基本セットは他の端末へ移りません。');
     p.append(el('h3','現在の案件から取り込む'),el('p','分類 → アイコン → 文言の順に取り込めます。同じID・名前・文言の項目は、追加前に比較します。'));
     for(const key of ['paletteGroupMaster','equipmentGroupMaster','workCategoryMaster','types','wordingSets']){const group=el('details');group.append(el('summary',collectionNames[key]));p.append(group);for(const x of api.projectPack()[key]||[]){const row=el('div');row.className='basic-item';const match=draft[key].find(y=>y.id===x.id||norm(y.name||y.text)===norm(x.name||x.text));row.append(el('span',(x.name||x.text)+(match?'（登録済み候補あり）':'')),el('button','比較して取込',()=>compare(key,x,match)));group.append(row)}}
     p.append(el('h3','ファイルと履歴'));
-    p.append(el('button','基本セットを書き出す',()=>{try{validate(draft);api.download(new Blob([JSON.stringify(draft,null,2)],{type:'application/json'}),'基本セット.json')}catch(e){message(e.message)}}));
+    p.append(el('button','基本セットを書き出す',()=>{try{validate(draft);api.download(new Blob([JSON.stringify(draft,null,2)],{type:'application/json'}),'基本セット.json');message(`画像付きアイコン ${imageCount(draft)} 種を含む設定JSONを書き出しました。`)}catch(e){message(e.message)}}));
     const file=input(p,'基本セットJSONを下書きへ読み込む','',()=>{},'file');file.accept='.json';file.onchange=async()=>{try{const data=JSON.parse(await file.files[0].text());validate(data);if(confirm('現在の下書きを読み込んだ内容に置き換えますか？')){draft=data;persist();render()}}catch(e){message('読み込めません：'+e.message)}};
     p.append(el('p','他の利用者の初回設定には「配布・お知らせ」から initial-settings.json を書き出し、アプリと同じ公開フォルダへ置きます。設定済み端末は自動上書きしません。'));
     let history=[];try{history=JSON.parse(localStorage.getItem(HISTORY)||'[]')}catch{}

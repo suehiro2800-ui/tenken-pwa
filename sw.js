@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tenken-shell-v62-2';
+const CACHE_NAME = 'tenken-shell-v62-3';
 const APP_FILES = [
   './', './index.html', './app.css', './app.js', './admin.js', './delivery.js', './reuse.js', './manifest.json', './icon.svg',
   './apple-touch-icon.png', './icon-192.png', './icon-512.png',

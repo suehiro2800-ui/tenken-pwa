@@ -121,7 +121,7 @@ export function installSettingsReuse(api){
   function describe(key,x,pack){
     if(!x)return '該当なし';
     const group=(key,id)=>pack[key].find(g=>g.id===id)?.name||id||'共通';
-    if(key==='types')return `${x.name}\n表示：${x.glyph||'画像'} ／ 記号：${x.mark||'なし'} ／ サイズ：${x.defaultSize}\n入力画面：${({door:'扉測定',smokeOutlet:'排煙口',smokeWindow:'排煙窓',basic:'一般記録'})[x.form]}\n分類：${group('paletteGroupMaster',x.paletteGroupId)}\n設備大分類：${group('equipmentGroupMaster',x.majorGroupId)}\n作業区分：${(x.workCategoryIds||[]).map(id=>group('workCategoryMaster',id)).join('、')||'共通'}\n背景色：${x.color||'標準'}（${x.colorMode==='group'?'分類に連動':'個別色'}） ／ 文字色：${x.textColor||'標準'}\n測定部位：${(x.components||[]).join('、')||'なし'}\n追加項目：${(x.extraFields||[]).join('、')||'なし'}\n配置メニュー：${x.enabled!==false?'表示':'非表示'} ／ 常用：${x.paletteFavorite?'表示':'非表示'}\n集計：${x.countByDefault!==false?'含める':'除外'} ／ 単位：${x.countUnit||'台'}\n番号位置：${({top:'上',bottom:'下',left:'左',right:'右'})[x.labelPosition||'bottom']}\n調査区分：${x.findingCategorySelection?.join('、')||'共通設定'}\n常用ボタン：\n${(x.quickFindings||[]).map(q=>`${q.label||q.title}［${q.severity}］\n${q.title||''}\n${q.detail||''}\n改善提案：${q.proposal||'なし'}\n対象作業：${(q.workCategoryIds||[]).map(id=>group('workCategoryMaster',id)).join('、')||'共通'}`).join('\n\n')||'なし'}`;
+    if(key==='types')return `${x.name}\n表示：${x.iconData?'登録画像（JSONに含む）':x.glyph||'画像'} ／ 記号：${x.mark||'なし'} ／ サイズ：${x.defaultSize}\n入力画面：${({door:'扉測定',smokeOutlet:'排煙口',smokeWindow:'排煙窓',basic:'一般記録'})[x.form]}\n分類：${group('paletteGroupMaster',x.paletteGroupId)}\n設備大分類：${group('equipmentGroupMaster',x.majorGroupId)}\n作業区分：${(x.workCategoryIds||[]).map(id=>group('workCategoryMaster',id)).join('、')||'共通'}\n背景色：${x.color||'標準'}（${x.colorMode==='group'?'分類に連動':'個別色'}） ／ 文字色：${x.textColor||'標準'}\n測定部位：${(x.components||[]).join('、')||'なし'}\n追加項目：${(x.extraFields||[]).join('、')||'なし'}\n配置メニュー：${x.enabled!==false?'表示':'非表示'} ／ 常用：${x.paletteFavorite?'表示':'非表示'}\n集計：${x.countByDefault!==false?'含める':'除外'} ／ 単位：${x.countUnit||'台'}\n番号位置：${({top:'上',bottom:'下',left:'左',right:'右'})[x.labelPosition||'bottom']}\n調査区分：${x.findingCategorySelection?.join('、')||'共通設定'}\n常用ボタン：\n${(x.quickFindings||[]).map(q=>`${q.label||q.title}［${q.severity}］\n${q.title||''}\n${q.detail||''}\n改善提案：${q.proposal||'なし'}\n対象作業：${(q.workCategoryIds||[]).map(id=>group('workCategoryMaster',id)).join('、')||'共通'}`).join('\n\n')||'なし'}`;
     if(key==='wordingSets')return `${x.severity||'要是正'} ／ ${group('equipmentGroupMaster',x.equipmentGroupId)}\n${x.text}`;
     return x.name+(x.color?' ／ '+x.color:'');
   }
@@ -148,11 +148,11 @@ export function installSettingsReuse(api){
     }
     function selection(){
       status.textContent='';body.replaceChildren();save.hidden=false;save.disabled=false;save.textContent='取り込み内容を確認';save.onclick=()=>{replaceWhole=false;preview()};
-      body.append(el('p','取り込み元：'+sourceName));
+      body.append(el('p','取り込み元：'+sourceName),el('p',`画像付きアイコン：取り込み元 ${source.types.filter(t=>t.iconData).length} 種 ／ 取り込み先 ${target.types.filter(t=>t.iconData).length} 種。画像は設定JSONに含まれます。`));
       const select=el('select');option(select,'project','この案件へ取り込む');option(select,'personal','自分用初期設定へ取り込む（次の新規案件から）');select.value=targetKind;
       select.onchange=()=>{targetKind=select.value;target=api.readTarget(targetKind);choices.forEach(c=>{c.action='skip';c.targetId='';c.name=''});selection()};
       const field=el('label');field.className='field';field.append(el('span','取り込み先'),select);body.append(field);
-      body.append(el('p','必要な項目を選んでください。必要な分類・参照文言は未登録なら一緒に追加します。登録済みの分類は選択しない限り変更しません。'));
+      body.append(el('p','必要な項目を選んでください。必要な分類・参照文言は未登録なら一緒に追加します。登録済みの分類は選択しない限り変更しません。同じアイコンに画像を反映する場合は「既存の項目を更新する」を選びます。'));
       body.append(button('未登録の項目だけ選ぶ',()=>{for(const c of choices)c.action=settingMatches(target,c.key,source[c.key].find(x=>x.id===c.id),source).length?'skip':'add';selection()}),button('すべての選択を解除',()=>{choices.forEach(c=>c.action='skip');includeGeneral=false;selection()}),button('取り込み元を選び直す',sourcePicker));
       if(targetKind==='personal')body.append(button('この一式を自分用初期設定にする',()=>{replaceWhole=true;preview()}),el('p','一式保存は自分用初期設定を置き換えます。非表示・削除したアイコンや並び順も、取り込み元と揃えます。現在の案件は変わりません。'));
       for(const key of ['types','wordingSets','paletteGroupMaster','equipmentGroupMaster','workCategoryMaster']){
@@ -178,7 +178,7 @@ export function installSettingsReuse(api){
       review=replaceWhole&&targetKind==='personal'?{pack:cleanSettingsPack(source),changes:[{key:'general',name:'取り込み元の設定一式で自分用初期設定を置き換える',action:'update'}]}:mergeSettings(target,source,choices,includeGeneral);
       if(!review.changes.length)throw Error('取り込む項目を選んでください。');
       body.replaceChildren();status.textContent='';body.append(el('h3','取り込み内容の確認'),el('p','取り込み先：'+(targetKind==='project'?'現在の案件':'自分用初期設定（次の新規案件から）')));
-      const list=el('ul');for(const c of review.changes)list.append(el('li',`${LABELS[c.key]}：${c.name} ／ ${c.action==='update'?'更新':'追加'}${c.automatic?'（必要な参照先を追加）':''}`));body.append(list);
+      body.append(el('p',`取り込み後の画像付きアイコン：${review.pack.types.filter(t=>t.iconData).length} 種`));const list=el('ul');for(const c of review.changes)list.append(el('li',`${LABELS[c.key]}：${c.name} ／ ${c.action==='update'?'更新':'追加'}${c.automatic?'（必要な参照先を追加）':''}`));body.append(list);
       if(replaceWhole){for(const key of SETTING_COLLECTIONS)body.append(el('p',`${LABELS[key]}：${target[key].length}件 → ${source[key].length}件`));const omitted=target.types.filter(x=>!source.types.some(y=>y.id===x.id));if(omitted.length)body.append(el('p','新しい自分用初期設定には含まれないアイコン：'+omitted.map(x=>x.name).join('、')))}
       if(targetKind==='project')body.append(el('p','配置済みで使用しているアイコンを更新すると、この案件の見た目・以後の入力設定にも反映します。図面・配置座標・入力済み測定値・指摘本文・写真は保持します。'));
       body.append(button('選択画面へ戻る',selection));save.textContent='この内容で取り込む';save.onclick=apply;
