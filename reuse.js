@@ -5,8 +5,17 @@ const clone=value=>structuredClone(value);
 const norm=value=>String(value||'').normalize('NFKC').replace(/\s+/g,'').toLowerCase();
 const strings=value=>Array.isArray(value)?[...new Set(value.filter(x=>typeof x==='string'&&x.trim()))]:[];
 const pick=(value,keys)=>Object.fromEntries(keys.filter(k=>value?.[k]!==undefined).map(k=>[k,clone(value[k])]));
-const TYPE_FIELDS=['id','name','category','paletteGroupId','majorGroupId','workCategoryIds','glyph','form','mark','color','textColor','defaultSize','sizeVersion','components','extraFields','enabled','paletteFavorite','paletteOrder','countByDefault','countUnit','labelPosition','recordKind','iconData','findingCategorySelection'];
+const TYPE_FIELDS=['id','name','category','paletteGroupId','majorGroupId','workCategoryIds','glyph','form','mark','color','colorMode','textColor','defaultSize','sizeVersion','components','extraFields','enabled','paletteFavorite','paletteOrder','countByDefault','countUnit','labelPosition','recordKind','iconData','findingCategorySelection'];
 const QUICK_FIELDS=['id','label','severity','title','detail','proposal','phraseId','workCategoryIds'];
+export function syncPaletteColors(pack){
+  for(const t of pack.types||[]){
+    const group=pack.paletteGroupMaster?.find(g=>g.id===(t.paletteGroupId||t.category));
+    if(!group)continue;
+    if(!['group','custom'].includes(t.colorMode))t.colorMode=!t.color||String(t.color).toLowerCase()===String(group.color).toLowerCase()?'group':'custom';
+    if(t.colorMode==='group')t.color=group.color;
+  }
+  return pack;
+}
 export function cleanSettingsPack(value){
   if(value?.format!=='tenken-pwa-settings'||value.schemaVersion!==1)throw Error('対応する設定ファイルではありません。');
   const pack={format:'tenken-pwa-settings',schemaVersion:1,name:String(value.name||'自分用 初期設定'),updatedAt:String(value.updatedAt||'')};
@@ -36,7 +45,7 @@ export function cleanSettingsPack(value){
     if((t.workCategoryIds||[]).some(id=>!has('workCategoryMaster',id))||(t.quickFindings||[]).some(q=>(q.workCategoryIds||[]).some(id=>!has('workCategoryMaster',id))))throw Error('常用ボタン・アイコンの作業区分を確認してください。');
   }
   for(const w of pack.wordingSets)if(w.equipmentGroupId&&!has('equipmentGroupMaster',w.equipmentGroupId))throw Error('文言の設備大分類を確認してください。');
-  return pack;
+  return syncPaletteColors(pack);
 }
 export function settingMatches(pack,key,item,source){
   const sameGroup=x=>{
@@ -112,13 +121,13 @@ export function installSettingsReuse(api){
   function describe(key,x,pack){
     if(!x)return '該当なし';
     const group=(key,id)=>pack[key].find(g=>g.id===id)?.name||id||'共通';
-    if(key==='types')return `${x.name}\n表示：${x.glyph||'画像'} ／ 記号：${x.mark||'なし'} ／ サイズ：${x.defaultSize}\n入力画面：${({door:'扉測定',smokeOutlet:'排煙口',smokeWindow:'排煙窓',basic:'一般記録'})[x.form]}\n分類：${group('paletteGroupMaster',x.paletteGroupId)}\n設備大分類：${group('equipmentGroupMaster',x.majorGroupId)}\n作業区分：${(x.workCategoryIds||[]).map(id=>group('workCategoryMaster',id)).join('、')||'共通'}\n背景色：${x.color||'標準'} ／ 文字色：${x.textColor||'標準'}\n測定部位：${(x.components||[]).join('、')||'なし'}\n追加項目：${(x.extraFields||[]).join('、')||'なし'}\n配置メニュー：${x.enabled!==false?'表示':'非表示'} ／ 常用：${x.paletteFavorite?'表示':'非表示'}\n集計：${x.countByDefault!==false?'含める':'除外'} ／ 単位：${x.countUnit||'台'}\n番号位置：${({top:'上',bottom:'下',left:'左',right:'右'})[x.labelPosition||'bottom']}\n調査区分：${x.findingCategorySelection?.join('、')||'共通設定'}\n常用ボタン：\n${(x.quickFindings||[]).map(q=>`${q.label||q.title}［${q.severity}］\n${q.title||''}\n${q.detail||''}\n改善提案：${q.proposal||'なし'}\n対象作業：${(q.workCategoryIds||[]).map(id=>group('workCategoryMaster',id)).join('、')||'共通'}`).join('\n\n')||'なし'}`;
+    if(key==='types')return `${x.name}\n表示：${x.glyph||'画像'} ／ 記号：${x.mark||'なし'} ／ サイズ：${x.defaultSize}\n入力画面：${({door:'扉測定',smokeOutlet:'排煙口',smokeWindow:'排煙窓',basic:'一般記録'})[x.form]}\n分類：${group('paletteGroupMaster',x.paletteGroupId)}\n設備大分類：${group('equipmentGroupMaster',x.majorGroupId)}\n作業区分：${(x.workCategoryIds||[]).map(id=>group('workCategoryMaster',id)).join('、')||'共通'}\n背景色：${x.color||'標準'}（${x.colorMode==='group'?'分類に連動':'個別色'}） ／ 文字色：${x.textColor||'標準'}\n測定部位：${(x.components||[]).join('、')||'なし'}\n追加項目：${(x.extraFields||[]).join('、')||'なし'}\n配置メニュー：${x.enabled!==false?'表示':'非表示'} ／ 常用：${x.paletteFavorite?'表示':'非表示'}\n集計：${x.countByDefault!==false?'含める':'除外'} ／ 単位：${x.countUnit||'台'}\n番号位置：${({top:'上',bottom:'下',left:'左',right:'右'})[x.labelPosition||'bottom']}\n調査区分：${x.findingCategorySelection?.join('、')||'共通設定'}\n常用ボタン：\n${(x.quickFindings||[]).map(q=>`${q.label||q.title}［${q.severity}］\n${q.title||''}\n${q.detail||''}\n改善提案：${q.proposal||'なし'}\n対象作業：${(q.workCategoryIds||[]).map(id=>group('workCategoryMaster',id)).join('、')||'共通'}`).join('\n\n')||'なし'}`;
     if(key==='wordingSets')return `${x.severity||'要是正'} ／ ${group('equipmentGroupMaster',x.equipmentGroupId)}\n${x.text}`;
     return x.name+(x.color?' ／ '+x.color:'');
   }
   function open(){
     let source=null,sourceName='',targetKind='project',target,choices=[],includeGeneral=false,review,replaceWhole=false;
-    api.showModal('設定を取り込む','<div id="settingsReuseBody"></div><p id="settingsReuseStatus" role="status"></p>',()=>{});
+    api.showModal('設定を取り込む','<p class="settings-import-flow">取り込み元を選ぶ → 取り込み先を選ぶ → 必要な項目を選ぶ → 内容を確認 → 確定</p><div id="settingsReuseBody"></div><p id="settingsReuseStatus" role="status"></p>',()=>{});
     const body=document.querySelector('#settingsReuseBody'),status=document.querySelector('#settingsReuseStatus'),save=document.querySelector('#modalSave');
     const back=()=>api.back();document.querySelector('#modalCancel').onclick=back;document.querySelector('#modalClose').onclick=back;
     const error=e=>{status.textContent=e.message||String(e)};
