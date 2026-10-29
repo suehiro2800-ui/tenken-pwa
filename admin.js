@@ -9,7 +9,7 @@ export function installBasicPackManager(api) {
   const imageCount=pack=>(pack.types||[]).filter(t=>!!t.iconData).length;
   const el=(tag,text,action)=>{const e=document.createElement(tag);if(text)e.textContent=text;if(action)e.onclick=action;return e};
   const message=text=>{root.querySelector('[role=status]').textContent=text};
-  function persist(pack=draft){try{localStorage.setItem(DRAFT,JSON.stringify(pack));message('下書き保存済みです。画像付きアイコン '+imageCount(pack)+' 種を含みます。新規案件に使うには「基本セットを一式更新」を押してください。');return true}catch{message('下書きを保存できません。空き容量を確認し、書き出してください。');return false}}
+  function persist(pack=draft){try{localStorage.setItem(DRAFT,JSON.stringify(pack));message('下書き保存済みです。画像付きアイコン '+imageCount(pack)+' 種を含みます。「基本セットを一式更新」で確定後、公開用JSONをアップロードすると他端末にも反映します。');return true}catch{message('下書きを保存できません。空き容量を確認し、書き出してください。');return false}}
   const canLeave=text=>!editor?.dirty()||confirm(text);
   const noteEdit=()=>{if(editor)message(editor.dirty()?'未保存の変更があります。「保存」で下書きに保存してください。':'編集中の項目に未保存の変更はありません。')};
   function instructions(parent,title,steps,note){
@@ -39,19 +39,19 @@ export function installBasicPackManager(api) {
   }
   function render(){
     editor=null;root.classList.remove('editing');root.replaceChildren();const box=el('section');box.className='basic-manager-box';root.append(box);
-    const header=el('header');header.append(el('h2','基本セット管理'),el('button','閉じる',()=>{if(!canLeave('未保存の項目編集を破棄して閉じますか？'))return;if(!persist())return;root.remove()}),el('button','管理者モード終了',()=>{if(!canLeave('未保存の項目編集を破棄して終了しますか？'))return;if(!persist())return;unlocked=false;root.remove()}));box.append(header);
+    const header=el('header');header.append(el('h2','基本セット管理'),el('button','閉じる',()=>{if(!canLeave('未保存の項目編集を破棄して閉じますか？'))return;if(!persist())return;root.remove();api.onClose?.()}),el('button','管理者モード終了',()=>{if(!canLeave('未保存の項目編集を破棄して終了しますか？'))return;if(!persist())return;unlocked=false;root.remove();api.onClose?.()}));box.append(header);
     const flow=el('div');flow.className='basic-save-flow';for(const text of ['① 項目を編集','②「保存」で下書き保存','③「基本セットを一式更新」で確定'])flow.append(el('span',text));box.append(flow);
-    box.append(el('p','ここで作るのは共通のひな形です。確定後、基本セットを使う次の新規案件へ反映します。現在の案件・保存済みの自分用初期設定は変わりません。'));
+    box.append(el('p','ここで作るのは共通のひな形です。公開後、各端末の基本セットを更新します。確定しただけでは他端末へ公開されません。公開用JSONをアップロードすると、各端末の個別追加を残して共通項目を更新します。'));
     box.append(el('p',`画像付きアイコン：下書き ${imageCount(draft)}種 ／ 確定済み ${imageCount(api.read())}種。登録画像は設定JSONに含めて渡します。`));
     const nav=el('nav');nav.setAttribute('aria-label','基本セットの設定');for(const [key,name]of Object.entries(labels)){const b=el('button',name,()=>{if(!canLeave('未保存の項目編集を破棄しますか？'))return;tab=key;render()});b.setAttribute('aria-pressed',String(tab===key));nav.append(b)}box.append(nav);
-    const status=el('p','各項目の「保存」は下書き保存です。新規案件に使うには「基本セットを一式更新」で確定します。');status.setAttribute('role','status');box.append(status);
+    const status=el('p','各項目の「保存」は下書き保存です。「基本セットを一式更新」で確定し、公開用JSONをアップロードします。');status.setAttribute('role','status');box.append(status);
     const body=el('div');body.className='basic-manager-content';box.append(body);
     if(tab==='types')instructions(body,'アイコンを設定する順番',[
       '使いたい所属先がない場合だけ、先に「分類・表示」で分類を追加します。登録済みの分類はそのまま選べます。',
       'アイコンを追加・編集し、名前・所属先・色・入力画面を設定します。',
       '編集画面の「保存」で下書き保存し、「一覧へ戻る」で確認します。',
       '設定が揃ったら、画面下の「基本セットを一式更新」で確定します。'
-    ],'パレット分類＝配置メニューと分類色、設備大分類＝報告書のまとめ方、作業区分＝常用文言の対象です。');
+    ],'パレット分類＝配置メニューと分類色、設備大分類＝報告書のまとめ方、作業区分＝報告書の初期値です。コメント候補は作業区分に関係なく表示します。');
     if(tab==='paletteGroupMaster')instructions(body,'分類を先に用意する場合',[
       'パレット分類・設備大分類・作業区分のうち、必要なものだけ追加・編集して「保存」します。',
       '次に「アイコン」へ移り、使う分類を所属先として選びます。',
@@ -119,7 +119,7 @@ export function installBasicPackManager(api) {
       for(const [k,n,options]of [['paletteGroupId','パレット分類',draft.paletteGroupMaster.map(g=>[g.id,g.name])],['majorGroupId','設備大分類',draft.equipmentGroupMaster.map(g=>[g.id,g.name])],['form','入力画面',[['door','扉測定'],['smokeOutlet','排煙口'],['smokeWindow','排煙窓'],['basic','一般記録']]],['labelPosition','整理番号の位置',[['bottom','下'],['top','上'],['left','左'],['right','右']]]])input(content,n,item[k]||options[0][0],v=>{update(k,v);if(k==='paletteGroupId')refreshColor()},'select',options);
       for(const [k,n]of [['enabled','配置メニューに表示'],['paletteFavorite','常用に表示'],['countByDefault','数量集計に含める']])check(content,n,item[k]!==false&&(k!=='paletteFavorite'||!!item[k]),v=>update(k,v));
       stringList(content,'測定部位',item.components,v=>update('components',v));stringList(content,'追加記録項目',item.extraFields,v=>update('extraFields',v));
-      const work=el('div');work.append(el('h4','常用文言の対象作業区分'));content.append(work);for(const g of draft.workCategoryMaster)check(work,g.name,(item.workCategoryIds||[]).includes(g.id),v=>{const ids=new Set(item.workCategoryIds||[]);v?ids.add(g.id):ids.delete(g.id);item.workCategoryIds=[...ids]});
+      const work=el('div');work.append(el('h4','旧設定の作業区分（コメント表示には使いません）'));content.append(work);for(const g of draft.workCategoryMaster)check(work,g.name,(item.workCategoryIds||[]).includes(g.id),v=>{const ids=new Set(item.workCategoryIds||[]);v?ids.add(g.id):ids.delete(g.id);item.workCategoryIds=[...ids]});
       for(const id of item.workCategoryIds||[])if(!draft.workCategoryMaster.some(g=>g.id===id))check(work,'参照先がない作業区分（'+id+'）— チェックを外して解除',true,v=>{item.workCategoryIds=v?[...new Set([...(item.workCategoryIds||[]),id])]:(item.workCategoryIds||[]).filter(x=>x!==id)});
       check(content,'調査区分は共通設定を使う',!Array.isArray(item.findingCategorySelection),v=>{item.findingCategorySelection=v?null:[...draft.findingCategories];categoryChoices()});
       const cats=el('div');content.append(cats);function categoryChoices(){cats.replaceChildren();if(Array.isArray(item.findingCategorySelection))for(const c of draft.findingCategories)check(cats,c,item.findingCategorySelection.includes(c),v=>{const ids=new Set(item.findingCategorySelection);v?ids.add(c):ids.delete(c);item.findingCategorySelection=[...ids]})}categoryChoices();
@@ -175,11 +175,11 @@ export function installBasicPackManager(api) {
   }
   function commit(){if(!unlocked)return;try{if(editor&&!editor.save())return;validate(draft);if(!confirm('基本セットを一式更新します。次の新規案件から適用します。現在の案件は変更しません。'))return;
       const before=api.read();const h=JSON.parse(localStorage.getItem(HISTORY)||'[]');h.unshift({date:new Date().toISOString(),pack:before});localStorage.setItem(HISTORY,JSON.stringify(h.slice(0,3)));
-      const pack=clone(draft);pack.updatedAt=new Date().toISOString();if(!api.write(pack))return;draft=pack;const saved=persist();render();message(saved?'基本セットを一式更新しました。次の新規案件から適用されます（自分用初期設定がある場合はそちらが優先されます）。':'基本セットの更新は完了しましたが、下書きの保存に失敗しました。空き容量を確認してください。');
+      const pack=clone(draft);pack.updatedAt=new Date().toISOString();if(!api.write(pack))return;draft=pack;const saved=persist();render();message(saved?'この端末の基本セットを確定しました。他端末へは公開用JSONを書き出してアップロードしてください。個別追加は保持します。':'基本セットの更新は完了しましたが、下書きの保存に失敗しました。空き容量を確認してください。');
     }catch(e){message(e.message)}}
   function deliverySettings(p){
     p.append(el('p',`配布する確定済みセットには画像付きアイコンが ${imageCount(api.read())} 種あります。下書きは ${imageCount(draft)} 種です。元PNGを別に同梱する必要はありません。`));
-    p.append(el('h3','初めて使う端末へ基本セットを配布'),el('p','「基本セットを一式更新」で確定した内容を書き出します。initial-settings.json をアプリと同じ公開フォルダへ置いてください。案件・設定・管理者の下書きがある端末には適用しません。通常の更新ZIPにこのファイルは含めません。'));
+    p.append(el('h3','基本セットを全端末へ自動配布・更新'),el('p','「基本セットを一式更新」で確定した内容を書き出します。initial-settings.json をアプリと同じ公開フォルダへ置いてください。使用済みの端末も公開内容を確認し、個別追加を残して基本セットを自動反映します。通常の更新ZIPにこのファイルは含めません。'));
     p.append(el('button','確定済みセットを initial-settings.json に書き出す',()=>{try{const pack=api.read();validate(pack);api.download(new Blob([JSON.stringify(pack,null,2)],{type:'application/json'}),'initial-settings.json');message(`画像付きアイコン ${imageCount(pack)} 種を含む設定JSONを書き出しました。`)}catch(e){message(e.message)}}));
     p.append(el('h3','メンテナンス・更新のお知らせ'),el('p','下の内容を app-status.json に書き出し、同じ公開フォルダへ置きます。メンテナンス中も入力・保存は続けられます。終了時はチェックを外したファイルを再公開してください。アプリを新しい版へ更新するときは、一式の配置が完了してから公開版数を変更します。'));
     let saved={};try{saved=JSON.parse(localStorage.getItem('tenken-delivery-notice-draft-v1')||'{}')}catch{}
@@ -194,10 +194,10 @@ export function installBasicPackManager(api) {
     instructions(p,'画像付きの基本セットを別の端末へ渡す方法',['アイコン画像の読み込み完了を確認して「保存」し、「基本セットを一式更新」で確定します。','この画面で基本セットJSONを書き出し、別の端末で設定JSONとして読み込みます。','すでに同じアイコンがある場合は「既存の項目を更新する」を選びます。自分用初期設定として一式を揃えることもできます。'],'PNG画像はJSONに埋め込みます。アプリの更新ZIPだけでは、この端末で登録した基本セットは他の端末へ移りません。');
     p.append(el('h3','現在の案件から取り込む'),el('p','分類 → アイコン → 文言の順に取り込めます。同じID・名前・文言の項目は、追加前に比較します。'));
     for(const key of ['paletteGroupMaster','equipmentGroupMaster','workCategoryMaster','types','wordingSets']){const group=el('details');group.append(el('summary',collectionNames[key]));p.append(group);for(const x of api.projectPack()[key]||[]){const row=el('div');row.className='basic-item';const match=draft[key].find(y=>y.id===x.id||norm(y.name||y.text)===norm(x.name||x.text));row.append(el('span',(x.name||x.text)+(match?'（登録済み候補あり）':'')),el('button','比較して取込',()=>compare(key,x,match)));group.append(row)}}
-    p.append(el('h3','ファイルと履歴'));
-    p.append(el('button','基本セットを書き出す',()=>{try{validate(draft);api.download(new Blob([JSON.stringify(draft,null,2)],{type:'application/json'}),'基本セット.json');message(`画像付きアイコン ${imageCount(draft)} 種を含む設定JSONを書き出しました。`)}catch(e){message(e.message)}}));
+    p.append(el('h3','ファイルと履歴'));p.append(el('button','公開用基本セットを書き出す（自動読込用）',()=>{try{const pack=api.read();validate(pack);api.download(new Blob([JSON.stringify(pack,null,2)],{type:'application/json'}),'initial-settings.json');message('initial-settings.jsonをindex.htmlと同じ公開フォルダへ置いてください。画像も含まれます。')}catch(e){message(e.message)}}));
+    p.append(el('button','下書きJSONを書き出す（手動読込用）',()=>{try{validate(draft);api.download(new Blob([JSON.stringify(draft,null,2)],{type:'application/json'}),'基本セット.json');message(`画像付きアイコン ${imageCount(draft)} 種を含む設定JSONを書き出しました。`)}catch(e){message(e.message)}}));
     const file=input(p,'基本セットJSONを下書きへ読み込む','',()=>{},'file');file.accept='.json';file.onchange=async()=>{try{const data=JSON.parse(await file.files[0].text());validate(data);if(confirm('現在の下書きを読み込んだ内容に置き換えますか？')){draft=data;persist();render()}}catch(e){message('読み込めません：'+e.message)}};
-    p.append(el('p','他の利用者の初回設定には「配布・お知らせ」から initial-settings.json を書き出し、アプリと同じ公開フォルダへ置きます。設定済み端末は自動上書きしません。'));
+    p.append(el('p','他の利用者へ自動反映するには「配布・お知らせ」から initial-settings.json を書き出し、アプリと同じ公開フォルダへ置きます。設定済み端末も共通項目を更新します。個別追加・点検記録は残します。'));
     let history=[];try{history=JSON.parse(localStorage.getItem(HISTORY)||'[]')}catch{}
     for(const entry of history)p.append(el('button',new Date(entry.date).toLocaleString('ja-JP')+' の更新前を下書きに復元',()=>{if(confirm('この履歴を下書きに戻しますか？ 一式更新するまでは初期設定は変わりません。')){draft=clone(entry.pack);persist();render()}}));
     p.append(el('button','確定済み基本セットから下書きを作り直す',()=>{if(confirm('編集途中の下書きを破棄しますか？')){draft=clone(api.read());persist();render()}}));

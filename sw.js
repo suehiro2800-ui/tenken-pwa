@@ -1,6 +1,6 @@
-const CACHE_NAME = 'tenken-shell-v62-3';
+const CACHE_NAME = 'tenken-shell-v65';
 const APP_FILES = [
-  './', './index.html', './app.css', './app.js', './admin.js', './delivery.js', './reuse.js', './manifest.json', './icon.svg',
+  './', './index.html', './app.css', './app.js', './admin.js', './delivery.js', './reuse.js', './shared.js','./storage.js', './manifest.json', './icon.svg',
   './apple-touch-icon.png', './icon-192.png', './icon-512.png',
   './vendor/pdf.min.mjs', './vendor/pdf.worker.min.mjs', './vendor/jszip.min.js'
 ];
@@ -21,7 +21,7 @@ self.addEventListener('fetch', event => {
   const request = event.request;
   if (request.method !== 'GET' || new URL(request.url).origin !== self.location.origin) return;
   const fileName=new URL(request.url).pathname.split('/').pop();
-  if(fileName==='initial-settings.json'||fileName==='app-status.json'){
+  if(fileName==='initial-settings.json'||decodeURIComponent(fileName)==='基本セット.json'||fileName==='app-status.json'){
     // Operational notices/settings must never fall back to an old cached copy.
     event.respondWith(fetch(new Request(request,{cache:'no-store'})).catch(()=>Response.error()));return;
   }

@@ -21,7 +21,7 @@ export function cleanSettingsPack(value){
   const pack={format:'tenken-pwa-settings',schemaVersion:1,name:String(value.name||'自分用 初期設定'),updatedAt:String(value.updatedAt||'')};
   for(const key of SETTING_COLLECTIONS){
     if(!Array.isArray(value[key])||(key!=='wordingSets'&&!value[key].length))throw Error('設定項目が不足しています：'+key);
-    pack[key]=value[key].map(item=>key==='types'?{...pick(item,TYPE_FIELDS),quickFindings:(Array.isArray(item?.quickFindings)?item.quickFindings:[]).map(q=>pick(q,QUICK_FIELDS))}:pick(item,key==='wordingSets'?['id','text','severity','equipmentGroupId']:key==='paletteGroupMaster'?['id','name','color']:['id','name']));
+    pack[key]=value[key].map(item=>key==='types'?{...pick(item,TYPE_FIELDS),quickFindings:(Array.isArray(item?.quickFindings)?item.quickFindings:[]).map(q=>pick(q,QUICK_FIELDS))}:pick(item,key==='wordingSets'?['id','text','severity','equipmentGroupId','detail','proposal']:key==='paletteGroupMaster'?['id','name','color']:['id','name']));
     const ids=new Set(),names=new Set();
     for(const item of pack[key]){
       const name=norm(item.name||item.text);
@@ -159,9 +159,9 @@ export function installSettingsReuse(api){
         const section=el('details');section.open=key==='types';section.append(el('summary',`${LABELS[key]}（${source[key].length}件）`));body.append(section);
         for(const item of source[key]){
           const c=choices.find(c=>c.key===key&&c.id===item.id),matches=settingMatches(target,key,item,source),row=el('div');row.className='reuse-item';section.append(row);
-          row.append(el('strong',item.name||item.text));
+          row.append(el('strong',item.name||item.text));if(matches.some(m=>api.isManaged?.(key,m.id)))row.append(el('small','基本セットの項目は公開内容を使います。独自に変える場合は別名で追加してください。'));
           const action=el('select');action.setAttribute('aria-label',(item.name||item.text)+'の取り込み方法');
-          option(action,'skip','取り込まない（今の設定を残す）');if(!matches.length)option(action,'add','追加する');if(matches.length)option(action,'update','既存の項目を更新する');option(action,'copy','別名で追加する');action.value=c.action;
+          option(action,'skip','取り込まない（今の設定を残す）');if(!matches.length)option(action,'add','追加する');if(matches.length&&matches.some(m=>!api.isManaged?.(key,m.id)))option(action,'update','既存の項目を更新する');option(action,'copy','別名で追加する');action.value=c.action;
           const matchSelect=el('select');matchSelect.setAttribute('aria-label','更新する既存項目');option(matchSelect,'','更新する項目を選択');for(const m of matches)option(matchSelect,m.id,m.name||m.text);matchSelect.value=c.targetId||(matches.length===1?matches[0].id:'');
           const name=el('input');name.type='text';name.placeholder=key==='wordingSets'?'追加する別の文言':'追加する別の名前';name.value=c.name;name.setAttribute('aria-label','別名で追加する名前・文言');
           const update=()=>{c.action=action.value;c.targetId=matchSelect.value;c.name=name.value;name.hidden=c.action!=='copy';matchSelect.hidden=c.action!=='update'||matches.length<2};action.onchange=update;name.oninput=update;matchSelect.onchange=update;update();
@@ -176,6 +176,7 @@ export function installSettingsReuse(api){
     function preview(){try{
       if(JSON.stringify(api.readTarget(targetKind))!==JSON.stringify(target))throw Error('取り込み先の設定が変わりました。取り込み先を選び直してください。');
       review=replaceWhole&&targetKind==='personal'?{pack:cleanSettingsPack(source),changes:[{key:'general',name:'取り込み元の設定一式で自分用初期設定を置き換える',action:'update'}]}:mergeSettings(target,source,choices,includeGeneral);
+      if(api.finalize)review.pack=api.finalize(review.pack);
       if(!review.changes.length)throw Error('取り込む項目を選んでください。');
       body.replaceChildren();status.textContent='';body.append(el('h3','取り込み内容の確認'),el('p','取り込み先：'+(targetKind==='project'?'現在の案件':'自分用初期設定（次の新規案件から）')));
       body.append(el('p',`取り込み後の画像付きアイコン：${review.pack.types.filter(t=>t.iconData).length} 種`));const list=el('ul');for(const c of review.changes)list.append(el('li',`${LABELS[c.key]}：${c.name} ／ ${c.action==='update'?'更新':'追加'}${c.automatic?'（必要な参照先を追加）':''}`));body.append(list);

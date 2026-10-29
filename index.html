@@ -15,15 +15,16 @@
 </head>
 <body>
   <header class="topbar">
-    <div class="brand"><span class="brand-mark">点</span><div><strong>現場点検ノート</strong><small>オフライン試作 0.62.3</small></div></div>
-    <div class="top-actions"><span id="networkBadge" class="badge">接続確認中</span><span id="offlineBadge" class="badge offline-pending" title="アプリ本体のオフライン保存状態">オフライン確認中</span><button id="newProjectBtn" class="btn btn-outline">新規案件</button><button id="deleteProjectBtn" class="btn btn-delete-project">案件削除</button><button id="saveProjectBtn" class="btn btn-light">案件を書き出す</button><button id="openProjectBtn" class="btn btn-outline">案件を開く</button><input id="projectFile" type="file" accept=".zip,application/zip" hidden></div>
+    <div class="brand"><span class="brand-mark">点</span><div><strong>現場点検ノート</strong><small>オフライン試作 0.65</small></div></div>
+    <div class="top-actions"><button id="storageBtn" class="btn btn-light">端末保存・写真救出</button><span id="networkBadge" class="badge">接続確認中</span><span id="offlineBadge" class="badge offline-pending" title="アプリ本体のオフライン保存状態">オフライン確認中</span><button id="newProjectBtn" class="btn btn-outline">新規案件</button><button id="deleteProjectBtn" class="btn btn-delete-project">案件削除</button><button id="saveProjectBtn" class="btn btn-light">ノートにまとめる（ZIP）</button><button id="openProjectBtn" class="btn btn-outline">案件を開く</button><input id="projectFile" type="file" accept=".zip,application/zip" hidden></div>
   </header>
   <main class="app-shell" id="appShell">
     <section class="workspace">
       <div class="project-strip">
         <div class="project-fields"><label>物件名<input id="projectName" type="text" placeholder="物件名を入力"></label><div class="date-range"><label>点検開始<input id="inspectionDateStart" type="date"></label><label>点検終了<input id="inspectionDateEnd" type="date"></label></div></div>
-        <div class="project-buttons"><button id="pdfBtn" class="btn btn-primary">図面PDFを読み込む</button><button id="envSettingsBtn" class="btn btn-light" type="button">環境設定</button><input id="pdfFile" type="file" accept="application/pdf,.pdf" hidden><button id="csvBtn" class="btn btn-light">測定一覧CSV</button><button id="exportPdfBtn" class="btn btn-light" disabled>指摘箇所確認図</button><button id="reportBtn" class="btn btn-primary">速報版報告書</button></div>
+        <div class="project-buttons"><button id="projectInfoBtn" class="btn btn-light">案件情報・保管先</button><button id="pdfBtn" class="btn btn-primary">図面PDFを読み込む</button><button id="envSettingsBtn" class="btn btn-light" type="button">環境設定</button><input id="pdfFile" type="file" accept="application/pdf,.pdf" hidden><button id="csvBtn" class="btn btn-light">測定一覧CSV</button><button id="exportPdfBtn" class="btn btn-light" disabled>指摘箇所確認図</button><button id="reportBtn" class="btn btn-primary">速報版報告書</button></div>
       </div>
+      <div id="trialProjectNotice" class="trial-notice" hidden><strong>試用中：端末には保存しません</strong><span>画面を閉じると内容は消えます。ZIPへの書出しはできます。</span><button id="saveTrialProjectBtn" type="button" class="btn btn-light">この案件を端末へ保存する</button></div>
       <div class="viewer-toolbar">
         <div class="page-controls"><button id="prevPage" class="icon-btn" aria-label="前のページ">‹</button><button id="pageLabel" class="page-label" title="クリックしてページ名を設定">図面未選択</button><button id="nextPage" class="icon-btn" aria-label="次のページ">›</button></div>
         <div class="tool-hint"><span class="mode-dot"></span><span id="modeHint">アイコンを選んでから図面をタップ</span><label class="continuous-place"><input id="continuousPlace" type="checkbox">連続配置</label><button id="cancelPlaceBtn" class="btn btn-light cancel-place" hidden>配置解除</button></div>
@@ -37,7 +38,7 @@
           <div id="markerLayer" class="marker-layer"></div>
         </div>
       </div>
-      <div class="map-footer"><span id="markerCount">設備 0件</span><span id="pdfName">図面未選択</span><span id="viewModeLabel" class="view-mode-label" hidden>指摘表示</span></div>
+      <div class="map-footer"><button id="saveStatus" class="save-status" type="button" aria-live="polite">端末内の保存・写真救出</button><span id="markerCount">設備 0件</span><span id="pdfName">図面未選択</span><span id="viewModeLabel" class="view-mode-label" hidden>指摘表示</span></div>
     </section>
     <aside class="side-panel" id="sidePanel">
       <div class="panel-tabs"><button class="tab active" data-tab="placement" id="placementTabButton">設備配置</button><button class="tab" data-tab="equipment" id="equipmentTabButton">検査一覧</button><button class="tab" data-tab="pages">ページ</button><button class="tab" data-tab="floor">フロアノート</button><button id="panelCloseBtn" class="panel-close" title="パネルを閉じる" aria-label="パネルを閉じる">×</button></div>
