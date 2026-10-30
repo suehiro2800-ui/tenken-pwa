@@ -1,4 +1,5 @@
 import {syncPaletteColors} from './reuse.js';
+import {iconCsv,planIconCsv,adoptIcons,mountCsvPanel} from './bulk.js';
 // Basic-pack editor. Holds its own draft; never borrows the active project's state.
 export function installBasicPackManager(api) {
   const DRAFT='tenken-basic-draft-v1', HISTORY='tenken-basic-history-v1', PIN='tenken-admin-pin-v1';
@@ -61,6 +62,7 @@ export function installBasicPackManager(api) {
       '文言を追加・編集し、設備大分類と区分を選んで「保存」します。',
       '「一覧へ戻る」で確認し、最後に「基本セットを一式更新」で確定します。'
     ],'すべての設備で使う文言は、設備大分類に「全設備共通」を選びます。');
+    if(tab==='types')iconBulkTools(body);
     if(tab==='types'||tab==='wordingSets')list(body,tab);
     if(tab==='paletteGroupMaster')for(const key of ['paletteGroupMaster','equipmentGroupMaster','workCategoryMaster']){body.append(el('h3',({paletteGroupMaster:'パレット分類',equipmentGroupMaster:'設備大分類',workCategoryMaster:'作業区分'})[key]));list(body,key)}
     if(tab==='rules'){
@@ -83,7 +85,24 @@ export function installBasicPackManager(api) {
     if(tab==='delivery')deliverySettings(body);
     const footer=el('footer');footer.append(el('button','下書きを保存',()=>editor?editor.save():persist()),el('button','基本セットを一式更新',commit));box.append(footer);
   }
-  function input(parent,label,value,change,type='text',options){const wrap=el('label');wrap.className='field';wrap.append(el('span',label));const e=el(type==='textarea'?'textarea':type==='select'?'select':'input');if(type!=='textarea'&&type!=='select')e.type=type;if(options){if(!options.some(([v])=>v===(value??''))){const o=el('option','現在の設定が見つかりません。選び直してください');o.value='';e.append(o)}for(const [v,n]of options){const o=el('option',n);o.value=v;e.append(o)}}e.value=options&&!options.some(([v])=>v===(value??''))?'':value??'';e.oninput=()=>{change(type==='number'?Number(e.value):e.value);noteEdit()};if(type==='select')e.onchange=e.oninput;wrap.append(e);parent.append(wrap);return e}
+
+  function iconBulkTools(parent){
+    const panel=el('section');panel.className='settings-operation-guide';parent.append(panel);panel.append(el('strong','自分用アイコンを基本セットへ反映'),el('p','取込元を選び、使いたいアイコンと差替先を確認します。差替先のIDを残すので、その基本アイコンを使用中の案件にも新しい設定を反映できます。'));
+    panel.append(el('button','現在の案件から選んで差し替え',()=>selectSourceIcons(api.projectPack(),'現在の案件')));
+    const personal=el('button','自分用初期設定から選んで差し替え',()=>selectSourceIcons(api.personalPack(),'自分用初期設定'));personal.disabled=!api.personalPack?.();panel.append(personal);
+    let snapshot;
+    mountCsvPanel(parent,{key:'basic-icons',title:'基本セットのアイコンCSV',description:'下書きの設定をCSVで一括編集します。画像は既存IDのものを保持します。取込後に「基本セットを一式更新」で確定します。',filename:'基本セット_アイコン設定.csv',download:api.download,export:template=>iconCsv(draft,template),prepare:(text,options)=>{snapshot=JSON.stringify(draft);const plan=planIconCsv(draft,text,options);validate(plan.next);syncPaletteColors(plan.next);return plan},apply:plan=>{if(JSON.stringify(draft)!==snapshot)throw Error('下書きが変更されています。CSVを選び直してください。');if(!persist(plan.next))throw Error('下書きを保存できません');draft=plan.next;render();message('CSVを下書きへ反映しました。最後に「基本セットを一式更新」で確定してください。')},success:'CSVを下書きへ反映しました。'});
+  }
+  function selectSourceIcons(source,label){
+    if(!source?.types?.length){message('取込元のアイコンがありません');return}
+    const snapshot=JSON.stringify(draft),body=root.querySelector('.basic-manager-content');body.replaceChildren();body.append(el('h3',label+' → 基本セットの下書き'),el('p','左側で取込対象を選び、差替先を選択してください。同じIDまたは名前は候補を設定します。名前が違う個別アイコンで基本アイコンを置き換える場合は、差替先を選び直してください。未選択の基本アイコンは残します。'));
+    const actions=el('div');body.append(actions);const choices=[];
+    for(const checked of [true,false])actions.append(el('button',checked?'すべて選択':'すべて解除',()=>choices.forEach(c=>c.check.checked=checked)));
+    for(const type of source.types){const row=el('section');row.className='basic-icon-replace-row';const check=el('input');check.type='checkbox';check.dataset.adoptSource=type.id;const name=el('label');name.append(check,document.createTextNode(type.name));const art=el('div');art.className='basic-preview';art.innerHTML=api.markerPreviewHtml(type);row.append(art,name);const select=el('select');select.setAttribute('aria-label',type.name+'の差替先');select.dataset.adoptTarget=type.id;const add=el('option','新規追加（既存を残す）');add.value='';select.append(add);for(const target of draft.types){const option=el('option','差替：'+target.name);option.value=target.id;select.append(option)}select.value=draft.types.find(t=>t.id===type.id)?.id||draft.types.find(t=>norm(t.name)===norm(type.name))?.id||'';row.append(select);body.append(row);choices.push({check,select,id:type.id})}
+    const status=el('p');status.setAttribute('role','status');body.append(status);body.append(el('button','選択したアイコンを下書きへ反映',()=>{try{if(JSON.stringify(draft)!==snapshot)throw Error('下書きが変わりました。画面を開き直してください');const selected=choices.filter(c=>c.check.checked).map(c=>({sourceId:c.id,targetId:c.select.value}));if(!selected.length)throw Error('アイコンを選択してください');const plan=adoptIcons(draft,source,selected);validate(plan.next);syncPaletteColors(plan.next);if(!persist(plan.next))throw Error('下書きを保存できません');draft=plan.next;render();message(`追加 ${plan.added}件・差替 ${plan.updated}件を下書きへ反映しました。「基本セットを一式更新」で確定してください。`)}catch(error){status.textContent=error.message}}),el('button','戻る',render));
+  }
+
+  function input(parent,label,value,change,type='text',options){const wrap=el('label');wrap.className='field';wrap.append(el('span',label));const e=el(type==='textarea'?'textarea':type==='select'?'select':'input');e.setAttribute('aria-label',label);if(type!=='textarea'&&type!=='select')e.type=type;if(options){if(!options.some(([v])=>v===(value??''))){const o=el('option','現在の設定が見つかりません。選び直してください');o.value='';e.append(o)}for(const [v,n]of options){const o=el('option',n);o.value=v;e.append(o)}}e.value=options&&!options.some(([v])=>v===(value??''))?'':value??'';e.oninput=()=>{change(type==='number'?Number(e.value):e.value);noteEdit()};if(type==='select')e.onchange=e.oninput;wrap.append(e);parent.append(wrap);return e}
   function check(p,label,value,change){const w=el('label');w.className='basic-check';const e=el('input');e.type='checkbox';e.checked=value;e.onchange=()=>{change(e.checked);noteEdit()};w.append(e,document.createTextNode(label));p.append(w);return e}
   function stringList(p,label,values,change){input(p,label+'（1行に1項目）',(values||[]).join('\n'),v=>change([...new Set(v.split('\n').map(x=>x.trim()).filter(Boolean))]),'textarea')}
   const collectionNames={types:'アイコン',wordingSets:'文言',paletteGroupMaster:'分類',equipmentGroupMaster:'設備大分類',workCategoryMaster:'作業区分'};
@@ -116,7 +135,7 @@ export function installBasicPackManager(api) {
       const colorInput=input(content,'アイコン個別の背景色',item.color,v=>update('color',v),'color');
       function refreshColor(){colorInput.disabled=item.colorMode!=='custom';colorInput.value=item.color||'#1769aa';colorMode.value=item.colorMode}
       refreshColor();content.append(el('p','分類の色に合わせる場合、パレット分類の色変更がアイコンにも反映します。文字色は個別に設定できます。'));
-      for(const [k,n,options]of [['paletteGroupId','パレット分類',draft.paletteGroupMaster.map(g=>[g.id,g.name])],['majorGroupId','設備大分類',draft.equipmentGroupMaster.map(g=>[g.id,g.name])],['form','入力画面',[['door','扉測定'],['smokeOutlet','排煙口'],['smokeWindow','排煙窓'],['basic','一般記録']]],['labelPosition','整理番号の位置',[['bottom','下'],['top','上'],['left','左'],['right','右']]]])input(content,n,item[k]||options[0][0],v=>{update(k,v);if(k==='paletteGroupId')refreshColor()},'select',options);
+      for(const [k,n,options]of [['paletteGroupId','パレット分類',draft.paletteGroupMaster.map(g=>[g.id,g.name])],['majorGroupId','設備大分類',draft.equipmentGroupMaster.map(g=>[g.id,g.name])],['form','入力画面',[['door','危害防止測定'],['smokeOutlet','排煙口'],['smokeWindow','排煙窓'],['basic','一般記録']]],['labelPosition','整理番号の位置',[['bottom','下'],['top','上'],['left','左'],['right','右']]]])input(content,n,item[k]||options[0][0],v=>{update(k,v);if(k==='paletteGroupId')refreshColor()},'select',options);
       for(const [k,n]of [['enabled','配置メニューに表示'],['paletteFavorite','常用に表示'],['countByDefault','数量集計に含める']])check(content,n,item[k]!==false&&(k!=='paletteFavorite'||!!item[k]),v=>update(k,v));
       stringList(content,'測定部位',item.components,v=>update('components',v));stringList(content,'追加記録項目',item.extraFields,v=>update('extraFields',v));
       const work=el('div');work.append(el('h4','旧設定の作業区分（コメント表示には使いません）'));content.append(work);for(const g of draft.workCategoryMaster)check(work,g.name,(item.workCategoryIds||[]).includes(g.id),v=>{const ids=new Set(item.workCategoryIds||[]);v?ids.add(g.id):ids.delete(g.id);item.workCategoryIds=[...ids]});
@@ -173,7 +192,7 @@ export function installBasicPackManager(api) {
     for(const w of pack.wordingSets)if(w.equipmentGroupId&&!has('equipmentGroupMaster',w.equipmentGroupId))throw Error('文言の設備大分類を確認してください');
     return pack;
   }
-  function commit(){if(!unlocked)return;try{if(editor&&!editor.save())return;validate(draft);if(!confirm('基本セットを一式更新します。次の新規案件から適用します。現在の案件は変更しません。'))return;
+  function commit(){if(!unlocked)return;try{if(editor&&!editor.save())return;validate(draft);if(!confirm('基本セットを一式更新します。画面を閉じると現在の案件にも基本セットを反映します。点検記録・個別追加は保持します。他端末への配布は公開用JSONのアップロードが必要です。'))return;
       const before=api.read();const h=JSON.parse(localStorage.getItem(HISTORY)||'[]');h.unshift({date:new Date().toISOString(),pack:before});localStorage.setItem(HISTORY,JSON.stringify(h.slice(0,3)));
       const pack=clone(draft);pack.updatedAt=new Date().toISOString();if(!api.write(pack))return;draft=pack;const saved=persist();render();message(saved?'この端末の基本セットを確定しました。他端末へは公開用JSONを書き出してアップロードしてください。個別追加は保持します。':'基本セットの更新は完了しましたが、下書きの保存に失敗しました。空き容量を確認してください。');
     }catch(e){message(e.message)}}
