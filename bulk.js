@@ -1,3 +1,4 @@
+import {markerFloor,parseWindowCount} from './locations.js';
 // CSV editing and measurement comparisons. Import plans are pure: no original
 // object is changed until the caller has previewed and persisted the plan.
 const clone=value=>structuredClone(value);
@@ -73,10 +74,10 @@ export function adoptIcons(target,source,choices){
   }
   return {next,changes,added,updated};
 }
-export const EQUIPMENT_HEADERS=['設備ID','取込キー','アイコンID','設備種別','整理記号','整理番号','PDFページ','ページ名','設置位置メモ','測定部位ID','測定部位','高さ(m)','幅(m)','10J基準秒数','基準の条件・根拠','閉鎖時間(秒)','閉鎖力(N)','危害防止装置','基準の取扱い','取扱いの根拠メモ','点検済み','図面X','図面Y','未配置'];
+export const EQUIPMENT_HEADERS=['設備ID','取込キー','アイコンID','設備種別','整理記号','整理番号','PDFページ','ページ名','設置位置メモ','測定部位ID','測定部位','高さ(m)','幅(m)','10J基準秒数','基準の条件・根拠','閉鎖時間(秒)','閉鎖力(N)','危害防止装置','基準の取扱い','取扱いの根拠メモ','点検済み','図面X','図面Y','未配置','階','排煙窓枚数'];
 export function equipmentCsv(project,types,template=false){
   const first=types.find(t=>t.form==='door')||types[0],markers=template?[{id:'',importKey:'NEW001',typeId:first.id,mark:first.mark,serial:'',page:1,memo:'1階 廊下',components:[{id:'',label:'本扉',height:'2.0',width:'0.9',tenJSeconds:'',tenJBasis:'Excelの計算条件を記載'}],unplaced:true}]:project.markers||[];
-  const rows=[];for(const m of markers){const t=types.find(t=>t.id===m.typeId)||{name:m.typeId};for(const c of m.components?.length?m.components:[{}])rows.push([m.id,m.importKey||'',m.typeId,t.name,m.mark??t.mark,m.serial,m.floorNoteId?'':m.page,m.floorNoteId?'':project.pageLabels?.[m.page]||'',m.memo,c.id,c.label,c.height,c.width,c.tenJSeconds,c.tenJBasis,c.time,c.force,c.hazard,m.hazardScope?HAZARD_SCOPE[m.hazardScope]:'案件に従う',m.hazardScopeNote||'',m.checked?1:0,m.unplaced||m.floorNoteId?'':m.x,m.unplaced||m.floorNoteId?'':m.y,m.unplaced?1:0])}
+  const rows=[];for(const m of markers){const t=types.find(t=>t.id===m.typeId)||{name:m.typeId};for(const c of m.components?.length?m.components:[{}])rows.push([m.id,m.importKey||'',m.typeId,t.name,m.mark??t.mark,m.serial,m.floorNoteId?'':m.page,m.floorNoteId?'':project.pageLabels?.[m.page]||'',m.memo,c.id,c.label,c.height,c.width,c.tenJSeconds,c.tenJBasis,c.time,c.force,c.hazard,m.hazardScope?HAZARD_SCOPE[m.hazardScope]:'案件に従う',m.hazardScopeNote||'',m.checked?1:0,m.unplaced||m.floorNoteId?'':m.x,m.unplaced||m.floorNoteId?'':m.y,m.unplaced?1:0,markerFloor(project,m),t.form==='smokeWindow'?(m.windowCount??''):''])}
   return writeCsv(EQUIPMENT_HEADERS,rows);
 }
 export function measurementSignature(c){return JSON.stringify([String(c.height??''),String(c.width??''),String(c.tenJBasis??'')])}
@@ -106,7 +107,7 @@ export function planEquipmentCsv(project,types,text,{clearBlanks=false,maxPage=0
     const original=project.markers.find(x=>x.id===m.id),before=JSON.stringify(m),meta=metaByMarker.get(m.id)||new Map();metaByMarker.set(m.id,meta);
     const setMeta=(name,value)=>{if(meta.has(name)&&JSON.stringify(meta.get(name))!==JSON.stringify(value))throw Error('同じ設備の'+name+'が行ごとに異なります');meta.set(name,value);diff(m[name],value,`${m.serial||key||m.id}：${name}`,changes);m[name]=value};
     if(requestedType&&requestedType!==m.typeId)setMeta('typeId',t.id);
-    for(const [column,prop] of [['整理記号','mark'],['整理番号','serial'],['設置位置メモ','memo'],['取扱いの根拠メモ','hazardScopeNote']])if(present(r,column,clearBlanks))setMeta(prop,r[column]);
+    for(const [column,prop] of [['整理記号','mark'],['整理番号','serial'],['設置位置メモ','memo'],['取扱いの根拠メモ','hazardScopeNote'],['階','floor']])if(present(r,column,clearBlanks))setMeta(prop,r[column]);
     if(present(r,'PDFページ',false)){if(m.floorNoteId){if(Number(r['PDFページ'])!==m.page)throw Error('フロアノートのページはCSVで変更できません')}else setMeta('page',number(r['PDFページ'],'PDFページ',{integer:true,min:1,max:maxPage||Infinity}))}
     if(present(r,'点検済み',clearBlanks))setMeta('checked',bool(r['点検済み'],'点検済み'));
     if(present(r,'基準の取扱い',clearBlanks)){const value=norm(r['基準の取扱い']),scope=value==='案件に従う'||value===''?'':Object.entries(HAZARD_SCOPE).find(([k,v])=>k===value||v===value)?.[0];if(scope===undefined)throw Error('基準の取扱いを確認してください');setMeta('hazardScope',scope)}
@@ -114,6 +115,7 @@ export function planEquipmentCsv(project,types,text,{clearBlanks=false,maxPage=0
     if(hasX){if(m.floorNoteId)throw Error('フロアノートの枠は図面座標で変更できません');setMeta('x',number(r['図面X'],'図面X',{max:1}));setMeta('y',number(r['図面Y'],'図面Y',{max:1}));setMeta('unplaced',false)}
     if(present(r,'未配置',false)&&bool(r['未配置'],'未配置'))setMeta('unplaced',true);
     if(present(r,'ページ名',false)){const name=r['ページ名'];next.pageLabels=next.pageLabels||{};const token='page:'+m.page;if(metaByMarker.has(token)&&metaByMarker.get(token)!==name)throw Error('同じページのページ名が行ごとに異なります');metaByMarker.set(token,name);diff(next.pageLabels[m.page],name,`ページ ${m.page}：ページ名`,changes);next.pageLabels[m.page]=name}
+    if(present(r,'排煙窓枚数',clearBlanks)){if(t.form!=='smokeWindow'){if(norm(r['排煙窓枚数']))throw Error('排煙窓以外の設備には窓枚数を設定できません')}else setMeta('windowCount',parseWindowCount(r['排煙窓枚数']))}
     const componentData=['測定部位ID','測定部位','高さ(m)','幅(m)','10J基準秒数','基準の条件・根拠','閉鎖時間(秒)','閉鎖力(N)','危害防止装置'].some(k=>present(r,k,false));
     if(componentData){if(t.form!=='door')throw Error('危害防止測定以外のアイコンに扉測定値は取り込めません');m.components=m.components||[];const compId=norm(r['測定部位ID']),label=r['測定部位']||'',matches=m.components.filter(c=>c.label===label);let c=compId?m.components.find(c=>c.id===compId):matches.length===1?matches[0]:null;
       if(compId&&!c)throw Error('測定部位IDが見つかりません。新しい部位はIDを空欄にしてください');
