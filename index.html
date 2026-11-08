@@ -15,7 +15,7 @@
 </head>
 <body>
   <header class="topbar">
-    <div class="brand"><span class="brand-mark">点</span><div><strong>現場点検ノート</strong><small>オフライン試作 0.65</small></div></div>
+    <div class="brand"><span class="brand-mark">点</span><div><strong>現場点検ノート</strong><small>オフライン試作 0.70</small></div></div>
     <div class="top-actions"><button id="storageBtn" class="btn btn-light">端末保存・写真救出</button><span id="networkBadge" class="badge">接続確認中</span><span id="offlineBadge" class="badge offline-pending" title="アプリ本体のオフライン保存状態">オフライン確認中</span><button id="newProjectBtn" class="btn btn-outline">新規案件</button><button id="deleteProjectBtn" class="btn btn-delete-project">案件削除</button><button id="saveProjectBtn" class="btn btn-light">ノートにまとめる（ZIP）</button><button id="openProjectBtn" class="btn btn-outline">案件を開く</button><input id="projectFile" type="file" accept=".zip,application/zip" hidden></div>
   </header>
   <main class="app-shell" id="appShell">
@@ -50,6 +50,7 @@
       </section>
       <section id="equipmentTab" class="panel-content" hidden>
         <div class="panel-heading"><div><h2>検査結果一覧</h2><p>整理番号順。選ぶと該当箇所へ移動</p></div><span id="equipmentCount" class="count-pill">0</span></div>
+        <button id="bulkHazardBtn" type="button" class="btn btn-light hazard-batch-entry" hidden>危害防止の既存不適格を一括設定</button>
         <div id="equipmentList" class="equipment-list"><div class="list-empty">まだ設備がありません</div></div>
       </section>
       <section id="fieldTab" class="panel-content" hidden><div class="panel-heading"><div><h2>現場管理一覧</h2><p>選ぶと図面上の場所へ移動</p></div><span id="fieldCount" class="count-pill">0</span></div><div id="fieldList" class="equipment-list"></div></section>

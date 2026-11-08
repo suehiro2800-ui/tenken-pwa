@@ -1,4 +1,5 @@
 import {markerFloor,parseWindowCount} from './locations.js';
+import {normalizeMountTypeOptions} from './reuse.js';
 // CSV editing and measurement comparisons. Import plans are pure: no original
 // object is changed until the caller has previewed and persisted the plan.
 const clone=value=>structuredClone(value);
@@ -26,11 +27,11 @@ function number(value,label,{positive=false,min=0,max=Infinity,integer=false}={}
 function bool(value,label){const s=norm(value).toLowerCase();if(['1','true','はい','有効','済'].includes(s))return true;if(['0','false','いいえ','無効','未'].includes(s))return false;throw Error(label+'は1か0で入力してください')}
 function diff(old,next,label,changes){if(JSON.stringify(old)!==JSON.stringify(next))changes.push({label,before:String(old??''),after:String(next??'')})}
 function knownHeaders(rows,allowed){for(const h of Object.keys(rows[0].values))if(!allowed.includes(h))throw Error('未対応の列名です：'+h)}
-const ICON_COLUMNS={id:'アイコンID',name:'アイコン名',mark:'整理記号',glyph:'表示文字',paletteGroupId:'パレット分類ID',majorGroupId:'設備大分類ID',form:'入力画面',defaultSize:'標準サイズ',colorMode:'色の指定',color:'背景色',textColor:'文字色',components:'初期測定部位',extraFields:'追加記録項目',enabled:'配置メニューに表示',paletteFavorite:'常用に表示',countByDefault:'台数集計',countUnit:'数量単位',labelPosition:'番号位置',paletteOrder:'表示順',workCategoryIds:'作業区分ID',findingCategorySelection:'使用する区分',quickFindings:'常用ボタンJSON'};
+const ICON_COLUMNS={id:'アイコンID',name:'アイコン名',mark:'整理記号',glyph:'表示文字',paletteGroupId:'パレット分類ID',majorGroupId:'設備大分類ID',form:'入力画面',defaultSize:'標準サイズ',colorMode:'色の指定',color:'背景色',textColor:'文字色',components:'初期測定部位',extraFields:'追加記録項目',enabled:'配置メニューに表示',paletteFavorite:'常用に表示',countByDefault:'台数集計',countUnit:'数量単位',labelPosition:'番号位置',paletteOrder:'表示順',workCategoryIds:'作業区分ID',findingCategorySelection:'使用する区分',quickFindings:'常用ボタンJSON',mountTypeOptions:'取付種別の候補'};
 export const ICON_HEADERS=[...Object.values(ICON_COLUMNS),'画像登録'];
 export function iconCsv(pack,template=false){
   const types=template?[{id:'',name:'追加する防火扉',mark:'FD',glyph:'扉',paletteGroupId:pack.paletteGroupMaster[0]?.id,majorGroupId:pack.equipmentGroupMaster[0]?.id,form:'door',defaultSize:22,colorMode:'group',color:pack.paletteGroupMaster[0]?.color||'#1769aa',textColor:'#ffffff',components:['本扉','くぐり戸'],enabled:true,paletteFavorite:false,countByDefault:true,labelPosition:'bottom',paletteOrder:pack.types.length,workCategoryIds:[],extraFields:[],quickFindings:[]}]:pack.types;
-  return writeCsv(ICON_HEADERS,types.map(t=>[...Object.keys(ICON_COLUMNS).map(k=>k==='form'?FORM_NAMES[t[k]]||t[k]:k==='quickFindings'?JSON.stringify(t[k]||[]):k==='findingCategorySelection'?(Array.isArray(t[k])?t[k].join('|'):'共通'):Array.isArray(t[k])?t[k].join('|'):typeof t[k]==='boolean'?Number(t[k]):t[k]),t.iconData?'あり（CSVでは画像を変更しません）':'なし']));
+  return writeCsv(ICON_HEADERS,types.map(t=>[...Object.keys(ICON_COLUMNS).map(k=>k==='form'?FORM_NAMES[t[k]]||t[k]:k==='mountTypeOptions'?normalizeMountTypeOptions(t[k]).join('\n'):k==='quickFindings'?JSON.stringify(t[k]||[]):k==='findingCategorySelection'?(Array.isArray(t[k])?t[k].join('|'):'共通'):Array.isArray(t[k])?t[k].join('|'):typeof t[k]==='boolean'?Number(t[k]):t[k]),t.iconData?'あり（CSVでは画像を変更しません）':'なし']));
 }
 export function planIconCsv(pack,text,{clearBlanks=false,protectedIds=[]}={}){
   const rows=parseCsv(text);knownHeaders(rows,ICON_HEADERS);if(!Object.hasOwn(rows[0].values,'アイコン名'))throw Error('アイコン名の列が必要です');
@@ -41,6 +42,7 @@ export function planIconCsv(pack,text,{clearBlanks=false,protectedIds=[]}={}){
     const t=old?clone(old):{id:requested||id('type'),name:'',glyph:'設',mark:'',category:'other',paletteGroupId:next.paletteGroupMaster[0]?.id,majorGroupId:next.equipmentGroupMaster[0]?.id,form:'basic',defaultSize:22,sizeVersion:1,colorMode:'group',color:next.paletteGroupMaster[0]?.color||'#1769aa',textColor:'#ffffff',components:[],extraFields:[],workCategoryIds:[],quickFindings:[],enabled:true,countByDefault:true,paletteFavorite:false,labelPosition:'bottom',paletteOrder:next.types.length};
     for(const [key,column] of Object.entries(ICON_COLUMNS)){if(key==='id'||!present(r,column,clearBlanks))continue;let v=r[column];
       if(['components','extraFields','workCategoryIds'].includes(key))v=String(v).split(/[|\n]/).map(norm).filter(Boolean);
+      else if(key==='mountTypeOptions')v=normalizeMountTypeOptions(v);
       else if(key==='findingCategorySelection')v=!v||norm(v)==='共通'?null:String(v).split(/[|\n]/).map(norm).filter(Boolean);
       else if(['enabled','paletteFavorite','countByDefault'].includes(key))v=bool(v,column);
       else if(key==='defaultSize')v=number(v,column,{min:12,max:90});
@@ -55,7 +57,7 @@ export function planIconCsv(pack,text,{clearBlanks=false,protectedIds=[]}={}){
     if(!['group','custom'].includes(t.colorMode))throw Error('色の指定はgroupかcustomです');if(t.labelPosition&&!['top','bottom','left','right'].includes(t.labelPosition))throw Error('番号位置を確認してください');
     if(t.color&&!/^#[0-9a-f]{6}$/i.test(t.color)||t.textColor&&!/^#[0-9a-f]{6}$/i.test(t.textColor))throw Error('色は#と6桁の16進数で入力してください');
     if(!old&&t.form==='door'&&!t.components.length)t.components=['扉'];
-    const partChanges=[];for(const key of Object.keys(ICON_COLUMNS).filter(k=>k!=='id'))diff(['components','extraFields','workCategoryIds','quickFindings'].includes(key)?old?.[key]||[]:key==='findingCategorySelection'?old?.[key]??null:old?.[key],['components','extraFields','workCategoryIds','quickFindings'].includes(key)?t[key]||[]:key==='findingCategorySelection'?t[key]??null:t[key],`${t.name}：${ICON_COLUMNS[key]}`,partChanges);
+    const partChanges=[];for(const key of Object.keys(ICON_COLUMNS).filter(k=>k!=='id'))diff(['components','extraFields','workCategoryIds','quickFindings','mountTypeOptions'].includes(key)?old?.[key]||[]:key==='findingCategorySelection'?old?.[key]??null:old?.[key],['components','extraFields','workCategoryIds','quickFindings','mountTypeOptions'].includes(key)?t[key]||[]:key==='findingCategorySelection'?t[key]??null:t[key],`${t.name}：${ICON_COLUMNS[key]}`,partChanges);
     if(old&&partChanges.length&&protectedIds.includes(old.id))throw Error('基本セットの項目です。管理者の基本セットCSVから変更してください：'+t.name);
     if(old){if(partChanges.length){next.types[next.types.findIndex(x=>x.id===old.id)]=t;updated++}}else{next.types.push(t);added++}
     changes.push(...partChanges);
@@ -74,10 +76,10 @@ export function adoptIcons(target,source,choices){
   }
   return {next,changes,added,updated};
 }
-export const EQUIPMENT_HEADERS=['設備ID','取込キー','アイコンID','設備種別','整理記号','整理番号','PDFページ','ページ名','設置位置メモ','測定部位ID','測定部位','高さ(m)','幅(m)','10J基準秒数','基準の条件・根拠','閉鎖時間(秒)','閉鎖力(N)','危害防止装置','基準の取扱い','取扱いの根拠メモ','点検済み','図面X','図面Y','未配置','階','排煙窓枚数'];
+export const EQUIPMENT_HEADERS=['設備ID','取込キー','アイコンID','設備種別','整理記号','整理番号','PDFページ','ページ名','設置位置メモ','測定部位ID','測定部位','高さ(m)','幅(m)','10J基準秒数','基準の条件・根拠','閉鎖時間(秒)','閉鎖力(N)','危害防止装置','基準の取扱い','取扱いの根拠メモ','点検済み','図面X','図面Y','未配置','階','排煙窓枚数','取付種別'];
 export function equipmentCsv(project,types,template=false){
   const first=types.find(t=>t.form==='door')||types[0],markers=template?[{id:'',importKey:'NEW001',typeId:first.id,mark:first.mark,serial:'',page:1,memo:'1階 廊下',components:[{id:'',label:'本扉',height:'2.0',width:'0.9',tenJSeconds:'',tenJBasis:'Excelの計算条件を記載'}],unplaced:true}]:project.markers||[];
-  const rows=[];for(const m of markers){const t=types.find(t=>t.id===m.typeId)||{name:m.typeId};for(const c of m.components?.length?m.components:[{}])rows.push([m.id,m.importKey||'',m.typeId,t.name,m.mark??t.mark,m.serial,m.floorNoteId?'':m.page,m.floorNoteId?'':project.pageLabels?.[m.page]||'',m.memo,c.id,c.label,c.height,c.width,c.tenJSeconds,c.tenJBasis,c.time,c.force,c.hazard,m.hazardScope?HAZARD_SCOPE[m.hazardScope]:'案件に従う',m.hazardScopeNote||'',m.checked?1:0,m.unplaced||m.floorNoteId?'':m.x,m.unplaced||m.floorNoteId?'':m.y,m.unplaced?1:0,markerFloor(project,m),t.form==='smokeWindow'?(m.windowCount??''):''])}
+  const rows=[];for(const m of markers){const t=types.find(t=>t.id===m.typeId)||{name:m.typeId};for(const c of m.components?.length?m.components:[{}])rows.push([m.id,m.importKey||'',m.typeId,t.name,m.mark??t.mark,m.serial,m.floorNoteId?'':m.page,m.floorNoteId?'':project.pageLabels?.[m.page]||'',m.memo,c.id,c.label,c.height,c.width,c.tenJSeconds,c.tenJBasis,c.time,c.force,c.hazard,m.hazardScope?HAZARD_SCOPE[m.hazardScope]:'案件に従う',m.hazardScopeNote||'',m.checked?1:0,m.unplaced||m.floorNoteId?'':m.x,m.unplaced||m.floorNoteId?'':m.y,m.unplaced?1:0,markerFloor(project,m),t.form==='smokeWindow'?(m.windowCount??''):'',m.mountType||''])}
   return writeCsv(EQUIPMENT_HEADERS,rows);
 }
 export function measurementSignature(c){return JSON.stringify([String(c.height??''),String(c.width??''),String(c.tenJBasis??'')])}
@@ -108,6 +110,11 @@ export function planEquipmentCsv(project,types,text,{clearBlanks=false,maxPage=0
     const setMeta=(name,value)=>{if(meta.has(name)&&JSON.stringify(meta.get(name))!==JSON.stringify(value))throw Error('同じ設備の'+name+'が行ごとに異なります');meta.set(name,value);diff(m[name],value,`${m.serial||key||m.id}：${name}`,changes);m[name]=value};
     if(requestedType&&requestedType!==m.typeId)setMeta('typeId',t.id);
     for(const [column,prop] of [['整理記号','mark'],['整理番号','serial'],['設置位置メモ','memo'],['取扱いの根拠メモ','hazardScopeNote'],['階','floor']])if(present(r,column,clearBlanks))setMeta(prop,r[column]);
+    if(present(r,'取付種別',clearBlanks)){
+      const value=r['取付種別'].trim();
+      if(value&&value!==original?.mountType&&!normalizeMountTypeOptions(t.mountTypeOptions).includes(value))throw Error('取付種別はアイコンに登録した候補から指定してください');
+      setMeta('mountType',value);
+    }
     if(present(r,'PDFページ',false)){if(m.floorNoteId){if(Number(r['PDFページ'])!==m.page)throw Error('フロアノートのページはCSVで変更できません')}else setMeta('page',number(r['PDFページ'],'PDFページ',{integer:true,min:1,max:maxPage||Infinity}))}
     if(present(r,'点検済み',clearBlanks))setMeta('checked',bool(r['点検済み'],'点検済み'));
     if(present(r,'基準の取扱い',clearBlanks)){const value=norm(r['基準の取扱い']),scope=value==='案件に従う'||value===''?'':Object.entries(HAZARD_SCOPE).find(([k,v])=>k===value||v===value)?.[0];if(scope===undefined)throw Error('基準の取扱いを確認してください');setMeta('hazardScope',scope)}

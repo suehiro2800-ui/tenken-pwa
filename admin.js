@@ -1,4 +1,4 @@
-import {syncPaletteColors} from './reuse.js';
+import {normalizeMountTypeOptions,syncPaletteColors} from './reuse.js';
 import {iconCsv,planIconCsv,adoptIcons,mountCsvPanel} from './bulk.js';
 // Basic-pack editor. Holds its own draft; never borrows the active project's state.
 export function installBasicPackManager(api) {
@@ -138,6 +138,7 @@ export function installBasicPackManager(api) {
       for(const [k,n,options]of [['paletteGroupId','パレット分類',draft.paletteGroupMaster.map(g=>[g.id,g.name])],['majorGroupId','設備大分類',draft.equipmentGroupMaster.map(g=>[g.id,g.name])],['form','入力画面',[['door','危害防止測定'],['smokeOutlet','排煙口'],['smokeWindow','排煙窓'],['basic','一般記録']]],['labelPosition','整理番号の位置',[['bottom','下'],['top','上'],['left','左'],['right','右']]]])input(content,n,item[k]||options[0][0],v=>{update(k,v);if(k==='paletteGroupId')refreshColor()},'select',options);
       for(const [k,n]of [['enabled','配置メニューに表示'],['paletteFavorite','常用に表示'],['countByDefault','数量集計に含める']])check(content,n,item[k]!==false&&(k!=='paletteFavorite'||!!item[k]),v=>update(k,v));
       stringList(content,'測定部位',item.components,v=>update('components',v));stringList(content,'追加記録項目',item.extraFields,v=>update('extraFields',v));
+      stringList(content,'取付種別の候補（例：埋込型・露出型）',normalizeMountTypeOptions(item.mountTypeOptions),v=>update('mountTypeOptions',v));
       const work=el('div');work.append(el('h4','旧設定の作業区分（コメント表示には使いません）'));content.append(work);for(const g of draft.workCategoryMaster)check(work,g.name,(item.workCategoryIds||[]).includes(g.id),v=>{const ids=new Set(item.workCategoryIds||[]);v?ids.add(g.id):ids.delete(g.id);item.workCategoryIds=[...ids]});
       for(const id of item.workCategoryIds||[])if(!draft.workCategoryMaster.some(g=>g.id===id))check(work,'参照先がない作業区分（'+id+'）— チェックを外して解除',true,v=>{item.workCategoryIds=v?[...new Set([...(item.workCategoryIds||[]),id])]:(item.workCategoryIds||[]).filter(x=>x!==id)});
       check(content,'調査区分は共通設定を使う',!Array.isArray(item.findingCategorySelection),v=>{item.findingCategorySelection=v?null:[...draft.findingCategories];categoryChoices()});

@@ -256,3 +256,23 @@ label.check-field input[type="checkbox"]{margin-top:2px}
 .marker-location{padding:12px;margin:0 0 12px;border:1px solid #d4e1ec;border-radius:10px;background:#f7fafc}.marker-location-heading{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:8px;font-size:12px}.marker-location-heading button{min-height:36px}.individual-floor{font-size:11px;margin:6px 0 10px}.individual-floor summary{color:#536e89;cursor:pointer}.individual-floor .field{margin-top:8px}.location-shortcuts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.location-shortcuts button{min-height:36px;white-space:normal;text-align:left;max-width:100%;overflow-wrap:anywhere}.marker-location .location-shortcuts .btn{font-size:11px;padding:7px 10px}.window-summary{padding:10px;background:#edf6fa;color:#245064;border:1px solid #d5e5ec;border-radius:8px;font-size:12px;line-height:1.7}#windowCountFeedback{line-height:1.6}input[aria-invalid=true]{border-color:#bb3535!important;background:#fff4f4!important}
 
 .marker-location .location-shortcuts button{min-height:44px}.floor-shortcuts{margin-bottom:10px}#fFloor,#fMemo,#fWindowCount{font-size:16px}
+
+.hazard-batch-entry{margin:0 0 8px;min-height:44px}
+.hazard-batch-filters select,.hazard-batch-note input{font-size:16px}
+.hazard-batch-rows{max-height:40vh;overflow-y:auto;border:1px solid var(--line);border-radius:8px}
+.hazard-batch-rows>p{padding:0 10px}
+.hazard-batch-row{display:flex;align-items:center;gap:10px;padding:8px 10px;min-height:44px;cursor:pointer}
+.hazard-batch-row+.hazard-batch-row{border-top:1px solid var(--line)}
+.hazard-batch-row input{flex:none;width:20px;height:20px}
+.hazard-batch-row span{min-width:0;overflow-wrap:anywhere}
+.hazard-batch-row small{display:block;color:#47596c}
+.hazard-batch-note{margin-top:12px}
+.equip-row .hazard-existing{color:#805511;font-weight:700}
+#inventoryCases .storage-case button{min-height:44px}
+
+.marker-mount-type{padding:0 2px 10px}
+.marker-mount-type strong{display:block;margin-bottom:5px;font-size:13px}
+.marker-mount-type small{display:block;margin-bottom:5px;color:#47596c}
+.marker-mount-type small[hidden]{display:none}
+.marker-mount-type .btn{min-height:44px;white-space:normal;overflow-wrap:anywhere}
+#typeMountOptions{font-size:16px}

@@ -5,7 +5,7 @@ export function createProjectStorage({indexedDB,now=()=>new Date().toISOString()
   const assetCache=new Map();
   const summary=p=>{
     const photos=new Set(Object.keys(p.mediaAssetIds||p.media||{}));for(const ph of [...(p.markers||[]).flatMap(m=>(m.findings||[]).flatMap(f=>f.photos||[])),...(p.fieldMarkers||[]).flatMap(m=>m.photos||[])])if(ph.blob)photos.add(ph.id);
-    return {id:p.id,name:p.name||'名称未設定',updatedAt:p.updatedAt||'',markerCount:p.markers?.length||0,photoCount:photos.size};
+    return {id:p.id,name:p.name||'名称未設定',updatedAt:p.updatedAt||'',savedAt:p.savedAt||'',markerCount:p.markers?.length||0,photoCount:photos.size};
   };
   function open(){
     if(connection)return Promise.resolve(connection);if(opening)return opening;
@@ -39,6 +39,37 @@ export function createProjectStorage({indexedDB,now=()=>new Date().toISOString()
   }
   const read=(store,key)=>transaction([store],'readonly',(tx,done)=>{const r=tx.objectStore(store).get(key);r.onsuccess=()=>done(r.result)});
   const list=()=>transaction(['summaries'],'readonly',(tx,done)=>{const r=tx.objectStore('summaries').getAll();r.onsuccess=()=>done((r.result||[]).sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)))});
+  function inventory(){
+    return transaction(['summaries','projects','assets'],'readonly',(tx,done)=>{
+      const sizes=new Map(),items=[];
+      const add=(id,kind,blob)=>{
+        const bytes=blob?.size;
+        if(!Number.isFinite(bytes)||bytes<=0)return;
+        if(!sizes.has(id))sizes.set(id,{pdfBytes:0,photoBytes:0});
+        sizes.get(id)[kind]+=bytes;
+      };
+      // Read one record at a time. Count each stored asset once, even when
+      // several checkpoints reference it or only photo rescue can reach it.
+      const scan=(store,visit)=>{
+        const request=tx.objectStore(store).openCursor();
+        request.onsuccess=()=>{const cursor=request.result;if(cursor){visit(cursor.value);cursor.continue()}};
+      };
+      scan('summaries',item=>items.push(item));
+      scan('assets',asset=>{
+        if(asset.slot==='pdf')add(asset.projectId,'pdfBytes',asset.blob);
+        else if(asset.slot?.startsWith('photo:'))add(asset.projectId,'photoBytes',asset.blob);
+      });
+      scan('projects',p=>{
+        if(p.storageFormat===2)return;
+        add(p.id,'pdfBytes',p.pdfBlob);
+        const media={...(p.media||{})};
+        const photos=[...(p.markers||[]).flatMap(m=>(m.findings||[]).flatMap(f=>f.photos||[])),...(p.fieldMarkers||[]).flatMap(m=>m.photos||[])];
+        for(const ph of photos)if(ph.blob&&!media[ph.id])media[ph.id]=ph.blob;
+        for(const blob of Object.values(media))add(p.id,'photoBytes',blob);
+      });
+      done({items,sizes});
+    }).then(({items,sizes})=>items.map(p=>({...p,pdfBytes:0,photoBytes:0,...sizes.get(p.id)})));
+  }
   function stripPhotoBlobs(p){
     const clean=ph=>{const {blob,...rest}=ph;return rest};
     return {...p,markers:(p.markers||[]).map(m=>({...m,findings:(m.findings||[]).map(f=>({...f,photos:(f.photos||[]).map(clean)}))})),fieldMarkers:(p.fieldMarkers||[]).map(m=>({...m,photos:(m.photos||[]).map(clean)}))};
@@ -110,11 +141,27 @@ export function createProjectStorage({indexedDB,now=()=>new Date().toISOString()
     await transaction(['assets'],'readonly',(tx)=>{const r=tx.objectStore('assets').openCursor();r.onsuccess=()=>{const cursor=r.result;if(!cursor)return;const a=cursor.value;if(a.projectId===id&&a.slot.startsWith('photo:'))found.set(a.id,{id:a.slot.slice(6),blob:a.blob,createdAt:a.createdAt});cursor.continue()}});
     return [...found.values()];
   }
-  function remove(id){
-    const job=()=>transaction(['projects','assets','history','summaries'],'readwrite',tx=>{
-      for(const name of ['projects','history','summaries'])tx.objectStore(name).delete(id);
-      const r=tx.objectStore('assets').openCursor();r.onsuccess=()=>{const c=r.result;if(!c)return;if(c.value.projectId===id)c.delete();c.continue()};assetCache.delete(id);
-    });const next=tail.then(job);tail=next.catch(()=>{});return next;
+  function remove(id,expectedRevision){
+    const job=async()=>{
+      await transaction(['projects','assets','history','summaries'],'readwrite',(tx,_done,fail)=>{
+        const summaries=tx.objectStore('summaries');
+        const removeRecords=()=>{
+          for(const name of ['projects','history','summaries'])tx.objectStore(name).delete(id);
+          const r=tx.objectStore('assets').openCursor();r.onsuccess=()=>{const c=r.result;if(!c)return;if(c.value.projectId===id)c.delete();c.continue()};
+        };
+        if(expectedRevision===undefined){removeRecords();return}
+        const request=summaries.get(id);
+        request.onsuccess=()=>{
+          const current=request.result;
+          if(!current||(current.savedAt||current.updatedAt)!==expectedRevision){
+            fail(Error('保存案件が更新されました。容量一覧を開き直して確認してください。'));return;
+          }
+          removeRecords();
+        };
+      });
+      assetCache.delete(id);
+    };
+    const next=tail.then(job);tail=next.catch(()=>{});return next;
   }
-  return {open,put,get,list,history,hydrate,photos,remove};
+  return {open,put,get,list,inventory,history,hydrate,photos,remove};
 }
