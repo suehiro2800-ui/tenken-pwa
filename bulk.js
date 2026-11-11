@@ -4,7 +4,7 @@ import {normalizeMountTypeOptions} from './reuse.js';
 // object is changed until the caller has previewed and persisted the plan.
 const clone=value=>structuredClone(value);
 const norm=value=>String(value??'').normalize('NFKC').trim();
-export const FORM_NAMES={door:'危害防止測定',smokeOutlet:'排煙口',smokeWindow:'排煙窓',basic:'一般記録'};
+export const FORM_NAMES={door:'危害防止測定',smokeOutlet:'排煙口',smokeWindow:'排煙窓',free:'自由測定・メモ',basic:'一般記録'};
 export const HAZARD_SCOPE={unknown:'未確認',current:'現行基準適用',existing:'既存不適格確認済み',exempt:'対象外'};
 const id=prefix=>prefix+'_'+crypto.randomUUID();
 const cellText=value=>{const s=String(value??'');return /^[=+\-@\t\r]/.test(s)?"'"+s:s};
@@ -76,10 +76,10 @@ export function adoptIcons(target,source,choices){
   }
   return {next,changes,added,updated};
 }
-export const EQUIPMENT_HEADERS=['設備ID','取込キー','アイコンID','設備種別','整理記号','整理番号','PDFページ','ページ名','設置位置メモ','測定部位ID','測定部位','高さ(m)','幅(m)','10J基準秒数','基準の条件・根拠','閉鎖時間(秒)','閉鎖力(N)','危害防止装置','基準の取扱い','取扱いの根拠メモ','点検済み','図面X','図面Y','未配置','階','排煙窓枚数','取付種別'];
+export const EQUIPMENT_HEADERS=['設備ID','取込キー','アイコンID','設備種別','整理記号','整理番号','PDFページ','ページ名','設置位置メモ','測定部位ID','測定部位','高さ(m)','幅(m)','10J基準秒数','基準の条件・根拠','閉鎖時間(秒)','閉鎖力(N)','危害防止装置','基準の取扱い','取扱いの根拠メモ','点検済み','図面X','図面Y','未配置','階','排煙窓枚数','取付種別','自由測定値','測定メモ'];
 export function equipmentCsv(project,types,template=false){
   const first=types.find(t=>t.form==='door')||types[0],markers=template?[{id:'',importKey:'NEW001',typeId:first.id,mark:first.mark,serial:'',page:1,memo:'1階 廊下',components:[{id:'',label:'本扉',height:'2.0',width:'0.9',tenJSeconds:'',tenJBasis:'Excelの計算条件を記載'}],unplaced:true}]:project.markers||[];
-  const rows=[];for(const m of markers){const t=types.find(t=>t.id===m.typeId)||{name:m.typeId};for(const c of m.components?.length?m.components:[{}])rows.push([m.id,m.importKey||'',m.typeId,t.name,m.mark??t.mark,m.serial,m.floorNoteId?'':m.page,m.floorNoteId?'':project.pageLabels?.[m.page]||'',m.memo,c.id,c.label,c.height,c.width,c.tenJSeconds,c.tenJBasis,c.time,c.force,c.hazard,m.hazardScope?HAZARD_SCOPE[m.hazardScope]:'案件に従う',m.hazardScopeNote||'',m.checked?1:0,m.unplaced||m.floorNoteId?'':m.x,m.unplaced||m.floorNoteId?'':m.y,m.unplaced?1:0,markerFloor(project,m),t.form==='smokeWindow'?(m.windowCount??''):'',m.mountType||''])}
+  const rows=[];for(const m of markers){const t=types.find(t=>t.id===m.typeId)||{name:m.typeId};for(const c of m.components?.length?m.components:[{}])rows.push([m.id,m.importKey||'',m.typeId,t.name,m.mark??t.mark,m.serial,m.floorNoteId?'':m.page,m.floorNoteId?'':project.pageLabels?.[m.page]||'',m.memo,c.id,c.label,c.height,c.width,c.tenJSeconds,c.tenJBasis,c.time,c.force,c.hazard,m.hazardScope?HAZARD_SCOPE[m.hazardScope]:'案件に従う',m.hazardScopeNote||'',m.checked?1:0,m.unplaced||m.floorNoteId?'':m.x,m.unplaced||m.floorNoteId?'':m.y,m.unplaced?1:0,markerFloor(project,m),t.form==='smokeWindow'?(m.windowCount??''):'',m.mountType||'',m.freeMeasurement||'',m.measurementMemo||''])}
   return writeCsv(EQUIPMENT_HEADERS,rows);
 }
 export function measurementSignature(c){return JSON.stringify([String(c.height??''),String(c.width??''),String(c.tenJBasis??'')])}
@@ -109,7 +109,7 @@ export function planEquipmentCsv(project,types,text,{clearBlanks=false,maxPage=0
     const original=project.markers.find(x=>x.id===m.id),before=JSON.stringify(m),meta=metaByMarker.get(m.id)||new Map();metaByMarker.set(m.id,meta);
     const setMeta=(name,value)=>{if(meta.has(name)&&JSON.stringify(meta.get(name))!==JSON.stringify(value))throw Error('同じ設備の'+name+'が行ごとに異なります');meta.set(name,value);diff(m[name],value,`${m.serial||key||m.id}：${name}`,changes);m[name]=value};
     if(requestedType&&requestedType!==m.typeId)setMeta('typeId',t.id);
-    for(const [column,prop] of [['整理記号','mark'],['整理番号','serial'],['設置位置メモ','memo'],['取扱いの根拠メモ','hazardScopeNote'],['階','floor']])if(present(r,column,clearBlanks))setMeta(prop,r[column]);
+    for(const [column,prop] of [['整理記号','mark'],['整理番号','serial'],['設置位置メモ','memo'],['取扱いの根拠メモ','hazardScopeNote'],['階','floor'],['自由測定値','freeMeasurement'],['測定メモ','measurementMemo']])if(present(r,column,clearBlanks))setMeta(prop,r[column]);
     if(present(r,'取付種別',clearBlanks)){
       const value=r['取付種別'].trim();
       if(value&&value!==original?.mountType&&!normalizeMountTypeOptions(t.mountTypeOptions).includes(value))throw Error('取付種別はアイコンに登録した候補から指定してください');

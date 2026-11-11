@@ -276,3 +276,11 @@ label.check-field input[type="checkbox"]{margin-top:2px}
 .marker-mount-type small[hidden]{display:none}
 .marker-mount-type .btn{min-height:44px;white-space:normal;overflow-wrap:anywhere}
 #typeMountOptions{font-size:16px}
+
+.add-finding-button{min-height:46px;margin-bottom:12px;font-size:15px}
+#findingSharedFields:not(:empty){margin-top:16px}
+.free-measurement{margin-top:10px}
+.free-measurement textarea{font-size:16px}
+.field-map-marker.room-map-marker{min-width:40px;min-height:40px;background:#fff;color:#47596c;font-weight:700}
+.field-map-marker.room-map-marker.done{background:#08704a;color:#fff;opacity:1}
+.room-edit-button{flex:none;min-height:36px}
