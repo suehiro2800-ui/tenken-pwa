@@ -8,8 +8,8 @@ import * as locations from './locations.js';
 import * as pdfjsLib from './vendor/pdf.min.mjs';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = './vendor/pdf.worker.min.mjs';
-const APP_VERSION='0.71.4';
-const OFFLINE_CACHE_NAME='tenken-shell-v714';
+const APP_VERSION='0.71.5';
+const OFFLINE_CACHE_NAME='tenken-shell-v715';
 const ENV_SETTINGS_KEY='tenken-pwa-environment-settings-v1';
 const COUNT_EXCLUDED_DEFAULTS=new Set(['special','reference-photo','free-memo']);
 const DEFAULT_PALETTE_FAVORITES=new Set(['special','reference-photo','free-memo']);
@@ -326,7 +326,7 @@ async function init(){
   $('#deleteProjectBtn').onclick=deleteCurrentProject;$('#saveTrialProjectBtn').onclick=saveTrialProject;
   $('#saveStatus').onclick=storageDialog;$('#storageBtn').onclick=storageDialog;$('#saveProjectBtn').onclick=exportProject;$('#openProjectBtn').onclick=()=>$('#projectFile').click();$('#projectFile').onchange=importProject;
   $('#projectName').oninput=()=>{state.project.name=$('#projectName').value;saveSoon()};$('#inspectionDateStart').onchange=()=>{state.project.dateStart=$('#inspectionDateStart').value;state.project.date=state.project.dateStart;saveSoon()};$('#inspectionDateEnd').onchange=()=>{state.project.dateEnd=$('#inspectionDateEnd').value;saveSoon()};
-  $('#pageCountCsvBtn').onclick=exportPageCountsCsv;$('#exportPdfBtn').onclick=openSubmissionSettings;$('#printPageBtn').onclick=printCurrentPage;$('#fullscreenBtn').onclick=toggleDrawingFullscreen;$('#issueFocusBtn').onclick=toggleIssueFocus;$('#fieldModeBtn').onclick=()=>toggleFieldMode();$('#prevPage').onclick=()=>changePage(-1);$('#nextPage').onclick=()=>changePage(1);$('#zoomIn').onclick=()=>setZoom(state.zoom*1.15);$('#zoomOut').onclick=()=>setZoom(state.zoom/1.15);$('#fitBtn').onclick=()=>setZoom(1);$('#csvBtn').onclick=exportCsv;
+  $('#pageCountCsvBtn').onclick=exportPageCountsCsv;$('#exportPdfBtn').onclick=openSubmissionSettings;$('#layoutPdfBtn').onclick=()=>openSubmissionDrawing(true);$('#printPageBtn').onclick=printCurrentPage;$('#fullscreenBtn').onclick=toggleDrawingFullscreen;$('#issueFocusBtn').onclick=toggleIssueFocus;$('#fieldModeBtn').onclick=()=>toggleFieldMode();$('#prevPage').onclick=()=>changePage(-1);$('#nextPage').onclick=()=>changePage(1);$('#zoomIn').onclick=()=>setZoom(state.zoom*1.15);$('#zoomOut').onclick=()=>setZoom(state.zoom/1.15);$('#fitBtn').onclick=()=>setZoom(1);$('#csvBtn').onclick=exportCsv;
   $('#bulkCsvBtn').onclick=csvBatchDialog;$('#bulkHazardBtn').onclick=bulkHazardDialog;$('#reportBtn').onclick=reportSettingsDialog;$('#recordsReportBtn').onclick=openRecordsReport;$('#envSettingsBtn').onclick=environmentSettingsDialog;$('#pageLabel').onclick=()=>editPageLabel(state.pdfPage);$('#cancelPlaceBtn').onclick=clearPlacementMode;$('#continuousPlace').onchange=e=>{state.keepPlacing=e.target.checked;showToast(state.keepPlacing?'連続配置をオンにしました':'1個ずつ配置します')};window.addEventListener('keydown',e=>{if(e.key==='Escape'){clearPlacementMode();if(state.fieldMode)toggleFieldMode()}});
   
   $$('.tab').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
@@ -363,7 +363,7 @@ async function deleteCurrentProject(){const current=state.project;if(!current)re
 function updateNetwork(){const b=$('#networkBadge');const online=navigator.onLine;b.textContent=online?'オンライン':'オフライン';b.classList.toggle('offline',!online)}
 function setOfflineStatus(text,title,cls){const b=$('#offlineBadge');if(!b)return;b.textContent=text;b.title=title;b.classList.remove('offline-ready','offline-pending','offline-unavailable');b.classList.add(cls)}
 async function registerOfflineSupport(){const expected=['./','./index.html','./app.css','./app.js','./admin.js','./delivery.js','./reuse.js','./shared.js','./storage.js','./manifest.json','./icon.svg','./apple-touch-icon.png','./icon-192.png','./icon-512.png','./vendor/pdf.min.mjs','./vendor/pdf.worker.min.mjs','./vendor/jszip.min.js'];if(!window.isSecureContext||!('caches'in window)||!('serviceWorker'in navigator)){setOfflineStatus('オフライン未対応','この接続またはブラウザーではオフライン保存を利用できません。HTTPSとService Worker対応を確認してください。','offline-unavailable');return}setOfflineStatus('準備中','アプリ本体の保存状態を確認しています','offline-pending');const cacheName=OFFLINE_CACHE_NAME;let registrationError=null;const deadline=Date.now()+20000;let missing=expected.slice();while(Date.now()<deadline){try{if((await caches.keys()).includes(cacheName)){const cache=await caches.open(cacheName);missing=[];for(const path of expected)if(!await cache.match(new URL(path,location.href).href))missing.push(path);if(!missing.length){setOfflineStatus('オフライン準備OK','アプリ本体はこの端末に保存されています。案件データ・図面・写真も案件を書き出して保管してください。','offline-ready');return}}}catch(error){console.warn('Offline cache check failed',error)}await new Promise(resolve=>setTimeout(resolve,300))}const detail=registrationError?'サービスワーカーを登録できませんでした。':`未確認: ${missing.join(', ')}`;setOfflineStatus('準備未完了',`アプリ v${APP_VERSION} のキャッシュを確認できません。${detail} 公開先に sw.js を含むアプリ一式があるか確認してください。`,'offline-unavailable')}
-function updateProjectFields(){renderSaveStatus();const p=state.project;const trial=$('#trialProjectNotice');if(trial)trial.hidden=!state.temporaryProject;$('#projectName').value=p?.name||'';const start=p?.dateStart||p?.date||'';$('#inspectionDateStart').value=start;$('#inspectionDateEnd').value=p?.dateEnd||start;$('#pdfName').textContent=p?.pdfName||'図面未選択';$('#pdfName').title=p?.pdfName||'';$('#exportPdfBtn').disabled=!state.pdf;$('#printPageBtn').disabled=!state.pdf}
+function updateProjectFields(){renderSaveStatus();const p=state.project;const trial=$('#trialProjectNotice');if(trial)trial.hidden=!state.temporaryProject;$('#projectName').value=p?.name||'';const start=p?.dateStart||p?.date||'';$('#inspectionDateStart').value=start;$('#inspectionDateEnd').value=p?.dateEnd||start;$('#pdfName').textContent=p?.pdfName||'図面未選択';$('#pdfName').title=p?.pdfName||'';$('#exportPdfBtn').disabled=!state.pdf;$('#layoutPdfBtn').disabled=!state.pdf;$('#printPageBtn').disabled=!state.pdf}
 async function activateProject(project){state.temporaryProject=false;migrateFindingRecords(project);project=managedProject(project);resetDrawingGestures();state.project=project;project.media=project.media||{};for(const ph of [...(project.markers||[]).flatMap(m=>(m.findings||[]).flatMap(f=>f.photos||[])),...(project.fieldMarkers||[]).flatMap(m=>m.photos||[])])if(ph.blob&&!project.media[ph.id])project.media[ph.id]=ph.blob;project.fieldMarkers=Array.isArray(project.fieldMarkers)?project.fieldMarkers:[];state.types=normalizeTypes(project.types?.length?project.types:[]);project.types=state.types;normalizeFloorNotes(project);state.floorUndo=null;state.floorSelection=[];state.floorSelecting=false;repairPaletteGroups(project);for(const m of project.markers||[])repairDoorComponents(m);state.paletteGroup='favorites';migrateMarkerSizes(project);project.workCategoryMaster=normalizeWorkCategories(project.workCategoryMaster);project.equipmentGroupMaster=normalizeEquipmentGroups(project.equipmentGroupMaster);project.findingCategories=Array.isArray(project.findingCategories)?findingCategoryList(project.findingCategories):structuredClone(state.envSettings?.findingCategories||defaultEnvironmentSettings().findingCategories);project.findingCategorySelection=normalizeFindingCategorySelection(project.findingCategorySelection);project.findingReportDefaults=normalizeFindingReportDefaults(project.findingReportDefaults);project.wordingSets=Array.isArray(project.wordingSets)?project.wordingSets:structuredClone(state.envSettings?.wordingSets||[]);project.reportDefaults=project.reportDefaults||structuredClone(state.envSettings?.reportDefaults||{workContent:''});project.fieldManagement=normalizeFieldManagement(project.fieldManagement);project.fieldBriefing=normalizeFieldBriefing(project.fieldBriefing);const validWorkIds=Array.isArray(project.selectedWorkCategories)?project.selectedWorkCategories.filter(id=>project.workCategoryMaster.some(x=>x.id===id)):[];project.selectedWorkCategories=validWorkIds;project.pageLabels=project.pageLabels||{};project.dateStart=project.dateStart||project.date||'';project.dateEnd=project.dateEnd||project.dateStart;releasePdf();state.pdfPage=1;state.activeType=null;state.activeFieldType=null;state.fieldMode=false;updateProjectFields();if(project.pdfBlob){await loadPdfBlob(project.pdfBlob,false)}else{renderAll()};restoreWorkspace(project);renderAll();saveState={projectId:project.id,status:'saved',savedAt:project.updatedAt||new Date().toISOString(),error:''};renderSaveStatus()}
 function switchTab(tab){$$('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));for(const name of ['placement','equipment','field','pages','floor']){const panel=$(`#${name}Tab`);if(panel)panel.hidden=tab!==name}if(tab==='placement'||tab==='pages')showDrawingWorkspace();if(tab==='pages')renderPageList();if(tab==='floor'){renderFloorNotesPanel();const floor=currentFloorNote()||floorNotes()[0];if(floor)showFloorNote(floor.id)}}
 function setPanelVisible(visible){$('#appShell').classList.toggle('panel-closed',!visible);$('#panelReopenBtn').hidden=visible;if(visible&&window.innerWidth<=680)$('#sidePanel').scrollIntoView({behavior:'smooth',block:'nearest'})}
@@ -884,24 +884,38 @@ function drawingReportRecords(){
   return selected.map(r=>{const key=JSON.stringify([r.f.severity||'',r.text]);if(!numbers.has(key))numbers.set(key,next++);return {...r,number:numbers.get(key)}});
 }
 function submissionDrawingCss(){return `*{box-sizing:border-box}body{margin:0;background:#e9edf1;color:#172536;font-family:-apple-system,BlinkMacSystemFont,"Yu Gothic","Meiryo",sans-serif}.toolbar{position:sticky;top:0;z-index:5;background:#14283d;color:#fff;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;font-size:13px}.toolbar button,.page-open{border:0;border-radius:7px;padding:9px 16px;background:#2d6fc4;color:#fff;font-weight:700;cursor:pointer}.page-list{max-width:900px;margin:20px auto;padding:0 16px}.page-choice{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 16px;background:#fff;border-bottom:1px solid #d5dce3}.page-choice:first-child{border-radius:10px 10px 0 0}.page-choice:last-child{border-radius:0 0 10px 10px}.page-choice small{display:block;color:#647487;margin-top:4px}.sheet{width:297mm;min-height:210mm;margin:12px auto;padding:7mm 9mm;background:white;overflow:hidden}.sheet h1{font-size:13pt;margin:0 0 3mm}.sheet h1 small{font-size:8pt;font-weight:400;color:#667}.drawing{position:relative;margin:0 auto;overflow:hidden}.drawing img,.overlay{position:absolute;inset:0;width:100%;height:100%;object-fit:fill}.reports{margin-top:3mm;font-size:8pt}.report-row{display:flex;flex-wrap:wrap;align-items:center;gap:1mm 3mm;padding:1.2mm 1mm;border-bottom:1px solid #cbd3dc}.report-row b{display:grid;place-items:center;flex:0 0 6mm;width:6mm;height:6mm;border-radius:50%;background:#c92332;color:#fff;font-size:8pt}.report-row span{min-width:0;overflow-wrap:anywhere}.report-row span:first-of-type{flex:0 1 auto;max-width:110mm}.report-row span:last-child{flex:0 1 auto;color:#405368}.hint{color:#d9e5f0;font-size:11px}@page{size:A4 landscape;margin:0}@media print{body{background:white}.toolbar{display:none}.sheet{margin:0;box-shadow:none;min-height:210mm}.sheet+.sheet{break-before:page;page-break-before:always}}@media screen{.sheet{box-shadow:0 2px 14px #0002}}`}
-async function openSubmissionDrawing(){
+function layoutDrawingMarkers(project,pdf){
+  const recordOnlyTypes=new Set(['special','reference-photo','free-memo']);
+  return (project.markers||[]).filter(marker=>{
+    const page=Number(marker.page);
+    return !marker.floorNoteId&&!marker.unplaced&&marker.recordKind!=='meeting'&&!recordOnlyTypes.has(marker.typeId)&&Number.isInteger(page)&&page>=1&&page<=pdf.numPages&&Number.isFinite(marker.x)&&Number.isFinite(marker.y);
+  });
+}
+function openSubmissionDrawing(layout=false){
+  const p=state.project,pdf=state.pdf;
+  if(!p||!pdf){showToast('先に図面PDFを読み込んでください');return}
+  const layoutMarkers=layout?layoutDrawingMarkers(p,pdf):null,records=layout?[]:drawingReportRecords();
+  if(layout&&!layoutMarkers.length){showToast('出力できる設備がありません。図面上に設備を配置してください');return}
   const win=window.open('','_blank');if(!win){showToast('新しいタブが開けません。ブラウザーのポップアップを許可してください');return}
-  const p=state.project,records=drawingReportRecords();
-  if(!records.length){win.document.write('<!doctype html><meta charset="utf-8"><p style="font:16px sans-serif;padding:24px">印刷対象の報告内容がありません。印刷する報告を選択してください。</p>');return}
-  const pageNumbers=[...new Set(records.map(r=>Number(r.m.page)).filter(n=>n>0))].sort((a,b)=>a-b);
-  const pageChoices=pageNumbers.map(pageNo=>{const count=new Set(records.filter(r=>Number(r.m.page)===pageNo).map(r=>r.number)).size;return `<div class="page-choice"><div><strong>${escapeHtml(pageName(pageNo))}</strong><small>${count}件の指摘番号</small></div><button type="button" class="page-open" data-page="${pageNo}">このページを出力</button></div>`}).join('');
-  const html=`<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(p.name||'指摘箇所確認図')} ページ選択</title><style>${submissionDrawingCss()}</style></head><body><div class="toolbar"><span class="hint">指摘があるページを出力します。プレビューから印刷 / PDF保存できます。</span></div><main class="page-list"><h1>出力するページを選択</h1><div class="page-choice"><label>図面の画質 <select id="drawingQuality"><option value="standard">標準</option><option value="high">高画質</option></select></label><button type="button" class="page-open" id="drawingBatch">全${pageNumbers.length}ページを一括出力</button></div>${pageChoices}</main></body></html>`;
+  if(!layout&&!records.length){win.document.write('<!doctype html><meta charset="utf-8"><p style="font:16px sans-serif;padding:24px">印刷対象の報告内容がありません。印刷する報告を選択してください。</p>');return}
+  const pageNumbers=[...new Set((layout?layoutMarkers:records.map(r=>r.m)).map(m=>Number(m.page)).filter(n=>n>0))].sort((a,b)=>a-b);
+  const pageChoices=pageNumbers.map(pageNo=>{
+    const count=layout?layoutMarkers.filter(m=>Number(m.page)===pageNo).length:new Set(records.filter(r=>Number(r.m.page)===pageNo).map(r=>r.number)).size;
+    return `<div class="page-choice"><div><strong>${escapeHtml(pageName(pageNo,p))}</strong><small>${count}件の${layout?'設備マーク':'指摘番号'}</small></div><button type="button" class="page-open" data-page="${pageNo}">このページを出力</button></div>`;
+  }).join('');
+  const kind=layout?'設備配置図':'指摘箇所確認図';
+  const pickerTitle=p.name&&layout?`${p.name} ${kind}`:p.name||kind;
+  const html=`<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(pickerTitle)} ページ選択</title><style>${submissionDrawingCss()}</style></head><body><div class="toolbar"><span class="hint">${layout?'設備を配置したページ':'指摘があるページ'}を出力します。プレビューから印刷 / PDF保存できます。</span></div><main class="page-list"><h1>${kind}の出力ページを選択</h1><div class="page-choice"><label>図面の画質 <select id="drawingQuality"><option value="standard">標準</option><option value="high">高画質</option></select></label><button type="button" class="page-open" id="drawingBatch">全${pageNumbers.length}ページを一括出力</button></div>${pageChoices}</main></body></html>`;
   win.document.open();win.document.write(html);win.document.close();
-  const pdf=state.pdf;
   function output(pages){
     const pageWin=window.open('','_blank');
     if(!pageWin){showToast('新しいタブが開けません。ブラウザーのポップアップを許可してください');return}
-    renderSubmissionDrawing(pages,records,pageWin,{project:p,pdf,high:win.document.getElementById('drawingQuality').value==='high'});
+    renderSubmissionDrawing(pages,records,pageWin,{project:p,pdf,high:win.document.getElementById('drawingQuality').value==='high',layoutMarkers});
   }
   win.document.getElementById('drawingBatch').onclick=()=>output(pageNumbers);
   win.document.querySelectorAll('.page-open[data-page]').forEach(button=>button.onclick=()=>output([Number(button.dataset.page)]));
 }
-async function renderSubmissionDrawing(pages,records,win,{project,pdf,high=false}){
+async function renderSubmissionDrawing(pages,records,win,{project,pdf,high=false,layoutMarkers=null}){
   win.document.write('<!doctype html><meta charset="utf-8"><title>図面を準備中</title><p id="drawingProgress" role="status" style="font:16px sans-serif;padding:24px">図面を準備しています…</p>');
   const urls=[];
   const release=()=>urls.splice(0).forEach(url=>win.URL?.revokeObjectURL(url));
@@ -920,11 +934,12 @@ async function renderSubmissionDrawing(pages,records,win,{project,pdf,high=false
       if(win.closed)return;
       const progress=win.document.getElementById?.('drawingProgress');
       if(progress)progress.textContent=`図面を準備しています… ${index+1} / ${pages.length}`;
-      sheets.push(await buildSubmissionDrawingSheet(pageNo,records,project,pdf,high,imageSource));
+      sheets.push(await buildSubmissionDrawingSheet(pageNo,records,project,pdf,high,imageSource,layoutMarkers));
     }
     if(win.closed)return;
     const title=pages.length===1?pageName(pages[0],project):'一括出力';
-    const html=`<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(project.name||'指摘箇所確認図')} ${escapeHtml(title)}</title><style>${submissionDrawingCss()}</style></head><body><div class="toolbar"><span class="hint">${escapeHtml(title)}・${high?'高画質':'標準'}。赤い指摘番号で一覧と照合できます。</span><button onclick="window.print()">印刷 / PDF保存</button></div>${sheets.join('')}</body></html>`;
+    const documentTitle=layoutMarkers?[project.name,'設備配置図',title].filter(Boolean).join(' '):`${project.name||'指摘箇所確認図'} ${title}`;
+    const html=`<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(documentTitle)}</title><style>${submissionDrawingCss()}</style></head><body><div class="toolbar"><span class="hint">${escapeHtml(title)}・${high?'高画質':'標準'}。${layoutMarkers?'配置した設備を表示します。':'赤い指摘番号で一覧と照合できます。'}</span><button onclick="window.print()">印刷 / PDF保存</button></div>${sheets.join('')}</body></html>`;
     win.document.open();win.document.write(html);win.document.close();
     win.addEventListener?.('pagehide',event=>{if(!event.persisted)release()});
     ready=true;
@@ -933,7 +948,7 @@ async function renderSubmissionDrawing(pages,records,win,{project,pdf,high=false
     if(!win.closed)win.document.body.innerHTML='<p style="font:16px sans-serif;padding:24px">図面を作成できませんでした。画質を標準にするか、ページごとに出力してください。</p>';
   }finally{if(!ready)release()}
 }
-async function buildSubmissionDrawingSheet(pageNo,records,p,pdf,high,imageSource){
+async function buildSubmissionDrawingSheet(pageNo,records,p,pdf,high,imageSource,layoutMarkers=null){
   const page=await pdf.getPage(pageNo),viewport=page.getViewport({scale:1.25});
   const scale=Math.min(high?2:1,4096/Math.max(viewport.width,viewport.height),Math.sqrt((high?6000000:3200000)/(viewport.width*viewport.height)));
   const bitmap=page.getViewport({scale:1.25*scale});
@@ -949,15 +964,23 @@ async function buildSubmissionDrawingSheet(pageNo,records,p,pdf,high,imageSource
     canvas.width=canvas.height=0;
     page.cleanup?.();
   }
-    const reports=records.filter(r=>Number(r.m.page)===pageNo),reportedIds=new Set(reports.map(r=>r.m.id)),onlyReported=p.submissionOptions?.onlyReported!==false,visible=p.markers.filter(m=>Number(m.page)===pageNo&&m.submission?.showMarker!==false&&(!onlyReported||reportedIds.has(m.id)));
+    const reports=records.filter(r=>Number(r.m.page)===pageNo),reportedIds=new Set(reports.map(r=>r.m.id)),onlyReported=p.submissionOptions?.onlyReported!==false,visible=layoutMarkers?layoutMarkers.filter(m=>Number(m.page)===pageNo):p.markers.filter(m=>Number(m.page)===pageNo&&m.submission?.showMarker!==false&&(!onlyReported||reportedIds.has(m.id)));
     let overlay='';
-    for(const m of visible){const t=p.types?.find(type=>type.id===m.typeId)||getType(m.typeId),x=m.x*viewport.width,y=m.y*viewport.height,size=Math.max(24,Math.min(52,Number(m.size)||28)),fill=t.color||'#1769aa',markerReports=reports.filter(r=>r.m.id===m.id),glyph=t.iconData?`<image href="${escapeHtml(t.iconData)}" x="${x-size/2+3}" y="${y-size/2+3}" width="${size-6}" height="${size-6}" preserveAspectRatio="xMidYMid meet"/>`:`<text x="${x}" y="${y+5}" text-anchor="middle" font-size="${Math.min(19,size*.5)}" font-weight="800" fill="${escapeHtml(t.textColor||'#fff')}">${escapeHtml(t.glyph||t.name.slice(0,1))}</text>`;
-      overlay+=`<g transform="translate(${x} ${y}) rotate(${Number(m.rotation)||0}) scale(${m.flipX?-1:1} ${m.flipY?-1:1}) translate(${-x} ${-y})"><rect x="${x-size/2}" y="${y-size/2}" width="${size}" height="${size}" rx="${Math.min(8,size/4)}" fill="${escapeHtml(fill)}" stroke="#fff" stroke-width="3"/>${glyph}</g><text x="${x}" y="${y+size/2+14}" text-anchor="middle" font-size="12" font-weight="700" fill="#172536" stroke="#fff" stroke-width="3" paint-order="stroke">${escapeHtml(markerTag(m,t))}</text>`;
+    for(const m of visible){const t=p.types?.find(type=>type.id===m.typeId)||getType(m.typeId),x=m.x*viewport.width,y=m.y*viewport.height,size=layoutMarkers?Math.max(12,Math.min(90,Number(m.size)||t.defaultSize||22)):Math.max(24,Math.min(52,Number(m.size)||28)),fill=t.color||'#1769aa',markerReports=reports.filter(r=>r.m.id===m.id),glyph=t.iconData?`<image href="${escapeHtml(t.iconData)}" x="${x-size/2+3}" y="${y-size/2+3}" width="${size-6}" height="${size-6}" preserveAspectRatio="xMidYMid meet"/>`:`<text x="${x}" y="${y+5}" text-anchor="middle" font-size="${layoutMarkers?Math.max(8,Math.min(28,Math.round(size*.43))):Math.min(19,size*.5)}" font-weight="800" fill="${escapeHtml(t.textColor||(layoutMarkers&&t.category==='light'?'#26394a':'#fff'))}">${escapeHtml(t.glyph||t.name.slice(0,1))}</text>`;
+      const position=layoutMarkers?(m.labelPosition||t.labelPosition):'bottom';
+      const labelPositions={top:[x,y-size/2-5,'middle'],left:[x-size/2-5,y+4,'end'],right:[x+size/2+5,y+4,'start'],bottom:[x,y+size/2+14,'middle']};
+      const [labelX,labelY,anchor]=labelPositions[position]||labelPositions.bottom;
+      overlay+=`<g transform="translate(${x} ${y}) rotate(${Number(m.rotation)||0}) scale(${m.flipX?-1:1} ${m.flipY?-1:1}) translate(${-x} ${-y})"><rect x="${x-size/2}" y="${y-size/2}" width="${size}" height="${size}" rx="${Math.min(8,size/4)}" fill="${escapeHtml(fill)}" stroke="#fff" stroke-width="3"/>${glyph}</g><text x="${labelX}" y="${labelY}" text-anchor="${anchor}" font-size="12" font-weight="700" fill="#172536" stroke="#fff" stroke-width="3" paint-order="stroke">${escapeHtml(markerTag(m,t))}</text>`;
       const issueNumbers=[...new Set(markerReports.map(r=>r.number))];if(issueNumbers.length){const label=issueNumbers.join('・'),bw=Math.max(25,label.length*8+10),bx=Math.max(1,Math.min(viewport.width-bw-1,x-size/2)),by=Math.max(15,y-size/2-4);overlay+=`<g><rect x="${bx}" y="${by-15}" width="${bw}" height="20" rx="10" fill="#c92332" stroke="#fff" stroke-width="2.5"/><text x="${bx+bw/2}" y="${by-1}" text-anchor="middle" font-size="11" font-weight="900" fill="#fff">${escapeHtml(label)}</text></g>`}
     }
     const svg=`<svg class="overlay" viewBox="0 0 ${viewport.width} ${viewport.height}" xmlns="http://www.w3.org/2000/svg">${overlay}</svg>`,rowGroups=new Map();for(const r of reports){const list=rowGroups.get(r.number)||[];list.push(r);rowGroups.set(r.number,list)}const rows=[...rowGroups.entries()].map(([number,items])=>{const targets=[...new Set(items.map(r=>markerTag(r.m,r.t)))].join('、');return `<div class="report-row"><b>${number}</b><span>${escapeHtml(items[0].text)}</span><span>${escapeHtml(targets)}</span></div>`}).join('');
     const ratio=viewport.width/viewport.height,drawWidth=Math.min(279,151*ratio),drawHeight=drawWidth/ratio;
     const name=escapeHtml(pageName(pageNo,p));
+    if(layoutMarkers){
+      const projectName=p.name?`${escapeHtml(p.name)} ／ `:'';
+      const layoutWidth=Math.min(279,176*ratio),layoutHeight=layoutWidth/ratio;
+      return `<section class="sheet"><h1>設備配置図 <small>${projectName}${name}（${pageNo} / ${pdf.numPages}）・設備 ${visible.length}件</small></h1><div class="drawing" style="width:${layoutWidth}mm;height:${layoutHeight}mm"><img src="${escapeHtml(image)}" alt="${name}">${svg}</div></section>`;
+    }
     return `<section class="sheet"><h1>${name} <small>${pageNo} / ${pdf.numPages}</small></h1><div class="drawing" style="width:${drawWidth}mm;height:${drawHeight}mm"><img src="${escapeHtml(image)}" alt="${name}">${svg}</div><div class="reports">${rows}</div></section>`;
 }
 
