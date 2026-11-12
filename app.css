@@ -278,9 +278,13 @@ label.check-field input[type="checkbox"]{margin-top:2px}
 #typeMountOptions{font-size:16px}
 
 .add-finding-button{min-height:46px;margin-bottom:12px;font-size:15px}
+#addFinding.add-finding-button,#addFinding.add-finding-button>span{color:#fff;-webkit-text-fill-color:#fff;font-weight:700}
 #findingSharedFields:not(:empty){margin-top:16px}
 .free-measurement{margin-top:10px}
 .free-measurement textarea{font-size:16px}
 .field-map-marker.room-map-marker{min-width:40px;min-height:40px;background:#fff;color:#47596c;font-weight:700}
 .field-map-marker.room-map-marker.done{background:#08704a;color:#fff;opacity:1}
 .room-edit-button{flex:none;min-height:36px}
+.room-list-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px}
+.room-list-actions .btn{min-height:36px;padding:5px 8px}
+.field-map-marker.room-map-marker{font-size:16px}

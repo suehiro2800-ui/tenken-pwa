@@ -3,10 +3,28 @@ export const PERSONAL_SETTINGS_KEY='tenken-personal-settings-v1';
 export const SETTING_COLLECTIONS=['paletteGroupMaster','equipmentGroupMaster','workCategoryMaster','wordingSets','types'];
 const clone=value=>structuredClone(value);
 const norm=value=>String(value||'').normalize('NFKC').replace(/\s+/g,'').toLowerCase();
-const strings=value=>Array.isArray(value)?[...new Set(value.filter(x=>typeof x==='string'&&x.trim()))]:[];
 const pick=(value,keys)=>Object.fromEntries(keys.filter(k=>value?.[k]!==undefined).map(k=>[k,clone(value[k])]));
 const TYPE_FIELDS=['id','name','category','paletteGroupId','majorGroupId','workCategoryIds','glyph','form','mark','color','colorMode','textColor','defaultSize','sizeVersion','components','extraFields','enabled','paletteFavorite','paletteOrder','countByDefault','countUnit','labelPosition','recordKind','iconData','findingCategorySelection','mountTypeOptions'];
 const QUICK_FIELDS=['id','label','severity','title','detail','proposal','phraseId','workCategoryIds'];
+export const MEMO_FINDING_CATEGORY='メモ・参考写真';
+export function findingCategoryName(value){
+  if(typeof value!=='string')return '';
+  const name=value.trim();
+  if(name==='参考')return '特記事項';
+  if(name==='メモ'||name==='参考写真')return MEMO_FINDING_CATEGORY;
+  return name;
+}
+export function findingCategoryList(value){
+  if(!Array.isArray(value))return [];
+  const names=value.filter(x=>typeof x==='string').map(x=>x.trim()).filter(Boolean);
+  const reference=names.indexOf('参考');
+  return [...new Set(names.flatMap((name,index)=>{
+    const category=findingCategoryName(name);
+    if(index===reference)return names.includes('特記事項')?[MEMO_FINDING_CATEGORY]:['特記事項',MEMO_FINDING_CATEGORY];
+    if(reference!==-1&&category===MEMO_FINDING_CATEGORY)return [];
+    return [category];
+  }))];
+}
 export function normalizeMountTypeOptions(value){
   const lines=Array.isArray(value)?value:typeof value==='string'?[value]:[];
   return [...new Set(lines.filter(line=>typeof line==='string')
@@ -37,13 +55,15 @@ export function cleanSettingsPack(value){
       if(key==='types'&&item.iconData&&!/^data:image\/png;base64,[A-Za-z0-9+/=\s]+$/.test(item.iconData))throw Error('アイコン画像はPNGを使用してください。');
     }
   }
-  pack.findingCategories=strings(value.findingCategories);
+  pack.findingCategories=findingCategoryList(value.findingCategories);
   if(!pack.findingCategories.length)throw Error('調査区分を1つ以上設定してください。');
-  pack.findingCategorySelection=Array.isArray(value.findingCategorySelection)?strings(value.findingCategorySelection):null;
-  pack.findingReportDefaults=Object.fromEntries(Object.entries(value.findingReportDefaults||{}).map(([key,v])=>[key,pick(v,['summary','photo'])]));
+  pack.findingCategorySelection=Array.isArray(value.findingCategorySelection)?findingCategoryList(value.findingCategorySelection):null;
+  pack.findingReportDefaults=Object.fromEntries(Object.entries(value.findingReportDefaults||{}).filter(([key])=>findingCategoryName(key)===key).map(([key,v])=>[key,pick(v,['summary','photo'])]));
   pack.reportDefaults={workContent:String(value.reportDefaults?.workContent||'')};
   const has=(key,id)=>pack[key].some(x=>x.id===id);
   for(const t of pack.types){
+    if(Array.isArray(t.findingCategorySelection))t.findingCategorySelection=findingCategoryList(t.findingCategorySelection);
+    for(const q of t.quickFindings)q.severity=findingCategoryName(q.severity)||'要是正';
     if(Object.hasOwn(t,'mountTypeOptions'))t.mountTypeOptions=normalizeMountTypeOptions(t.mountTypeOptions);
     if(!has('paletteGroupMaster',t.paletteGroupId||t.category)||!has('equipmentGroupMaster',t.majorGroupId))throw Error('アイコンの分類を確認してください：'+t.name);
     if(!Number.isFinite(t.defaultSize)||t.defaultSize<12||t.defaultSize>90)throw Error('アイコンのサイズは12～90で設定してください。');
@@ -128,7 +148,7 @@ export function installSettingsReuse(api){
     if(!x)return '該当なし';
     const group=(key,id)=>pack[key].find(g=>g.id===id)?.name||id||'共通';
     if(key==='types')return `${x.name}\n表示：${x.iconData?'登録画像（JSONに含む）':x.glyph||'画像'} ／ 記号：${x.mark||'なし'} ／ サイズ：${x.defaultSize}\n入力画面：${({door:'扉測定',smokeOutlet:'排煙口',smokeWindow:'排煙窓',free:'自由測定・メモ',basic:'一般記録'})[x.form]}\n分類：${group('paletteGroupMaster',x.paletteGroupId)}\n設備大分類：${group('equipmentGroupMaster',x.majorGroupId)}\n作業区分：${(x.workCategoryIds||[]).map(id=>group('workCategoryMaster',id)).join('、')||'共通'}\n背景色：${x.color||'標準'}（${x.colorMode==='group'?'分類に連動':'個別色'}） ／ 文字色：${x.textColor||'標準'}\n測定部位：${(x.components||[]).join('、')||'なし'}\n追加項目：${(x.extraFields||[]).join('、')||'なし'}\n取付種別の候補：${normalizeMountTypeOptions(x.mountTypeOptions).join('、')||'なし'}\n配置メニュー：${x.enabled!==false?'表示':'非表示'} ／ 常用：${x.paletteFavorite?'表示':'非表示'}\n集計：${x.countByDefault!==false?'含める':'除外'} ／ 単位：${x.countUnit||'台'}\n番号位置：${({top:'上',bottom:'下',left:'左',right:'右'})[x.labelPosition||'bottom']}\n調査区分：${x.findingCategorySelection?.join('、')||'共通設定'}\n常用ボタン：\n${(x.quickFindings||[]).map(q=>`${q.label||q.title}［${q.severity}］\n${q.title||''}\n${q.detail||''}\n改善提案：${q.proposal||'なし'}\n対象作業：${(q.workCategoryIds||[]).map(id=>group('workCategoryMaster',id)).join('、')||'共通'}`).join('\n\n')||'なし'}`;
-    if(key==='wordingSets')return `${x.severity||'要是正'} ／ ${group('equipmentGroupMaster',x.equipmentGroupId)}\n${x.text}`;
+    if(key==='wordingSets')return `${findingCategoryName(x.severity)||'要是正'} ／ ${group('equipmentGroupMaster',x.equipmentGroupId)}\n${x.text}`;
     return x.name+(x.color?' ／ '+x.color:'');
   }
   function open(){

@@ -1,4 +1,4 @@
-import {normalizeMountTypeOptions,syncPaletteColors} from './reuse.js';
+import {findingCategoryList,findingCategoryName,normalizeMountTypeOptions,syncPaletteColors} from './reuse.js';
 import {iconCsv,planIconCsv,adoptIcons,mountCsvPanel} from './bulk.js';
 // Basic-pack editor. Holds its own draft; never borrows the active project's state.
 export function installBasicPackManager(api) {
@@ -35,6 +35,9 @@ export function installBasicPackManager(api) {
     if(!unlocked)return login();
     try{draft=JSON.parse(localStorage.getItem(DRAFT)||'null')}catch{draft=null}
     if(!draft||draft.format!=='tenken-pwa-settings')draft=clone(api.read());
+    draft.findingCategories=findingCategoryList(draft.findingCategories);
+    if(Array.isArray(draft.findingCategorySelection))draft.findingCategorySelection=findingCategoryList(draft.findingCategorySelection);
+    for(const t of draft.types||[])if(Array.isArray(t.findingCategorySelection))t.findingCategorySelection=findingCategoryList(t.findingCategorySelection);
     syncPaletteColors(draft);
     root=el('div');root.className='basic-manager';root.setAttribute('role','dialog');root.setAttribute('aria-modal','true');root.setAttribute('aria-label','基本セット管理');document.body.append(root);render();
   }
@@ -67,7 +70,7 @@ export function installBasicPackManager(api) {
     if(tab==='paletteGroupMaster')for(const key of ['paletteGroupMaster','equipmentGroupMaster','workCategoryMaster']){body.append(el('h3',({paletteGroupMaster:'パレット分類',equipmentGroupMaster:'設備大分類',workCategoryMaster:'作業区分'})[key]));list(body,key)}
     if(tab==='rules'){
       body.append(el('p','共通の区分、選択ボタン、報告書の掲載初期値を設定します。'));
-      stringList(body,'調査区分',draft.findingCategories,v=>{draft.findingCategories=v;persist()});
+      stringList(body,'調査区分',draft.findingCategories,v=>{draft.findingCategories=findingCategoryList(v);persist()});
       const selection=draft.findingCategorySelection;
       const useAll=check(body,'選択ボタンに全区分を表示',!Array.isArray(selection),v=>{draft.findingCategorySelection=v?null:[...draft.findingCategories];persist();render()});
       for(const cat of draft.findingCategories){const row=el('div');row.className='basic-rule';row.append(el('strong',cat));body.append(row);
@@ -152,9 +155,9 @@ export function installBasicPackManager(api) {
         catch(e){if(sequence!==imageSequence||editor!==owner)return;imageLoading=false;imageError='画像を読み込めませんでした。選び直すか「登録画像を削除」で取り消してください。';imageStatus.textContent=imageError;message(imageError)}
       };
       content.append(el('button','登録画像を削除（表示文字に戻す）',()=>{imageSequence++;imageLoading=false;imageError='';upload.value='';update('iconData','');imageStatus.textContent='画像を削除する設定です。保存すると表示文字へ戻ります。'}));
-      const q=el('div');content.append(q);function quick(){q.replaceChildren();q.append(el('h4','常用ボタン'));(item.quickFindings||[]).forEach((x,i)=>{const row=el('fieldset');q.append(row);for(const [k,n]of [['label','ボタン名'],['title','内容・概要'],['detail','補足'],['proposal','改善提案']])input(row,n,x[k]||'',v=>x[k]=v);x.severity=x.severity||'要是正';input(row,'区分',x.severity,v=>x.severity=v,'select',draft.findingCategories.map(c=>[c,c]));for(const id of x.workCategoryIds||[])if(!draft.workCategoryMaster.some(g=>g.id===id))check(row,'参照先がない作業区分（'+id+'）— チェックを外して解除',true,v=>{x.workCategoryIds=v?[...new Set([...(x.workCategoryIds||[]),id])]:(x.workCategoryIds||[]).filter(i=>i!==id)});row.append(el('button','削除',()=>{item.quickFindings.splice(i,1);quick();noteEdit()}))});q.append(el('button','＋ 常用ボタンを追加',()=>{(item.quickFindings||=[]).push({id:crypto.randomUUID(),label:'',title:'',detail:'',severity:'要是正'});quick();noteEdit()}))}quick();
+      const q=el('div');content.append(q);function quick(){q.replaceChildren();q.append(el('h4','常用ボタン'));(item.quickFindings||[]).forEach((x,i)=>{const row=el('fieldset');q.append(row);for(const [k,n]of [['label','ボタン名'],['title','内容・概要'],['detail','補足'],['proposal','改善提案']])input(row,n,x[k]||'',v=>x[k]=v);x.severity=findingCategoryName(x.severity)||'要是正';input(row,'区分',x.severity,v=>x.severity=v,'select',draft.findingCategories.map(c=>[c,c]));for(const id of x.workCategoryIds||[])if(!draft.workCategoryMaster.some(g=>g.id===id))check(row,'参照先がない作業区分（'+id+'）— チェックを外して解除',true,v=>{x.workCategoryIds=v?[...new Set([...(x.workCategoryIds||[]),id])]:(x.workCategoryIds||[]).filter(i=>i!==id)});row.append(el('button','削除',()=>{item.quickFindings.splice(i,1);quick();noteEdit()}))});q.append(el('button','＋ 常用ボタンを追加',()=>{(item.quickFindings||=[]).push({id:crypto.randomUUID(),label:'',title:'',detail:'',severity:'要是正'});quick();noteEdit()}))}quick();
     }else if(key==='wordingSets'){
-      item.equipmentGroupId=item.equipmentGroupId||'';item.severity=item.severity||draft.findingCategories[0];input(content,'設備大分類',item.equipmentGroupId,v=>item.equipmentGroupId=v,'select',[['','全設備共通'],...draft.equipmentGroupMaster.map(g=>[g.id,g.name])]);input(content,'区分',item.severity,v=>item.severity=v,'select',draft.findingCategories.map(c=>[c,c]));
+      item.equipmentGroupId=item.equipmentGroupId||'';item.severity=findingCategoryName(item.severity)||draft.findingCategories[0];input(content,'設備大分類',item.equipmentGroupId,v=>item.equipmentGroupId=v,'select',[['','全設備共通'],...draft.equipmentGroupMaster.map(g=>[g.id,g.name])]);input(content,'区分',item.severity,v=>item.severity=v,'select',draft.findingCategories.map(c=>[c,c]));
     }else if(key==='paletteGroupMaster')input(content,'分類の色（分類に合わせるアイコンへ反映）',item.color,v=>item.color=v,'color');
     let savedItem=JSON.stringify(item);
     function save(next=false){
